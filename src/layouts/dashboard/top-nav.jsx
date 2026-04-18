@@ -43,8 +43,10 @@ export const TopNav = () => {
     <Box
       component="header"
       sx={{
-        backgroundColor: 'neutral.900',
-        color: 'common.white',
+        backgroundColor: 'rgba(255, 255, 255, 0.92)',
+        color: 'neutral.900',
+        backdropFilter: 'blur(10px)',
+        borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
         position: 'fixed',
         width: '100%',
         zIndex: (theme) => theme.zIndex.appBar
@@ -58,20 +60,50 @@ export const TopNav = () => {
           px: 3
         }}
       >
-        <Stack alignItems="center" direction="row" spacing={3}>
+        <Stack alignItems="center" direction="row" spacing={1.5}>
           <Box
             component={RouterLink}
             to="/"
-            sx={{ display: 'inline-flex', height: 24, width: 24 }}
+            sx={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.25,
+              textDecoration: 'none',
+              color: 'inherit'
+            }}
           >
-            <Logo />
+            <Logo size={40} />
+            <Stack spacing={0} sx={{ display: { xs: 'none', sm: 'flex' } }}>
+              <Typography
+                sx={{
+                  fontFamily: '"Playfair Display", serif',
+                  fontSize: 16,
+                  lineHeight: 1.1,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase'
+                }}
+              >
+                Oud Al-Anood
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'primary.main',
+                  letterSpacing: '0.25em',
+                  textTransform: 'uppercase',
+                  fontWeight: 600
+                }}
+              >
+                Admin
+              </Typography>
+            </Stack>
           </Box>
         </Stack>
         <Stack alignItems="center" direction="row" spacing={2}>
           {admin && (
             <Stack alignItems="flex-end" spacing={0} sx={{ display: { xs: 'none', sm: 'flex' } }}>
               <Typography variant="body2">{admin.name}</Typography>
-              <Typography variant="caption" sx={{ color: 'neutral.400' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                 {admin.role}
               </Typography>
             </Stack>

@@ -16,10 +16,10 @@ export const createPalette = (config) => {
       selected: alpha(neutral[900], 0.12)
     },
     background: {
-      default: contrast === 'high' ? '#FCFCFD' : common.white,
+      default: contrast === 'high' ? '#FBF9F6' : common.white,
       paper: common.white
     },
-    divider: '#F2F4F7',
+    divider: '#E5E1DA',
     error,
     info,
     mode: 'light',

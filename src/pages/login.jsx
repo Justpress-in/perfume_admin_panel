@@ -15,6 +15,7 @@ import {
   Typography
 } from '@mui/material';
 import { useAuth } from 'src/contexts/auth-context';
+import { Logo } from 'src/components/logo';
 
 const validationSchema = Yup.object({
   email: Yup.string().email('Must be a valid email').required('Email is required'),
@@ -61,12 +62,36 @@ const Page = () => {
         }}
       >
         <Container maxWidth="sm">
+          <Stack alignItems="center" spacing={1.5} sx={{ mb: 4 }}>
+            <Logo size={56} />
+            <Typography
+              sx={{
+                fontFamily: '"Playfair Display", serif',
+                fontSize: 22,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase'
+              }}
+            >
+              Oud Al-Anood
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'primary.main',
+                letterSpacing: '0.3em',
+                textTransform: 'uppercase',
+                fontWeight: 600
+              }}
+            >
+              Admin Console
+            </Typography>
+          </Stack>
           <Card>
             <CardContent sx={{ p: 4 }}>
               <Stack spacing={1} sx={{ mb: 3 }}>
-                <Typography variant="h5">Admin Login</Typography>
+                <Typography variant="h5">Welcome back</Typography>
                 <Typography color="text.secondary" variant="body2">
-                  Sign in to manage the dashboard.
+                  Sign in to manage the boutique.
                 </Typography>
               </Stack>
               <form onSubmit={formik.handleSubmit} noValidate>

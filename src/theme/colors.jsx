@@ -12,16 +12,16 @@ const withAlphas = (color) => {
 };
 
 export const neutral = {
-  50: '#F9FAFB',
-  100: '#F2F4F7',
-  200: '#EAECF0',
-  300: '#D0D5DD',
-  400: '#98A2B3',
-  500: '#667085',
-  600: '#475467',
-  700: '#344054',
-  800: '#1D2939',
-  900: '#101828'
+  50: '#FBF9F6',
+  100: '#F5F1EA',
+  200: '#E5E1DA',
+  300: '#C8C1B3',
+  400: '#999999',
+  500: '#666666',
+  600: '#44433F',
+  700: '#2E2D2A',
+  800: '#1F1E1C',
+  900: '#1A1A2E'
 };
 
 export const blue = withAlphas({
@@ -52,6 +52,21 @@ export const purple = withAlphas({
   contrastText: '#FFFFFF'
 });
 
+// Brand palette mirroring the storefront (oudalnood.com design system)
+export const gold = withAlphas({
+  light: '#E2C7A3',
+  main: '#C69C6D',
+  dark: '#B88A44',
+  contrastText: '#FFFFFF'
+});
+
+export const burgundy = withAlphas({
+  light: '#D97575',
+  main: '#8B1F1F',
+  dark: '#611212',
+  contrastText: '#FFFFFF'
+});
+
 export const success = withAlphas({
   light: '#3FC79A',
   main: '#10B981',
@@ -74,8 +89,8 @@ export const warning = withAlphas({
 });
 
 export const error = withAlphas({
-  light: '#FEE4E2',
-  main: '#F04438',
-  dark: '#B42318',
+  light: '#F9D6D6',
+  main: '#8B1F1F',
+  dark: '#611212',
   contrastText: '#FFFFFF'
 });
