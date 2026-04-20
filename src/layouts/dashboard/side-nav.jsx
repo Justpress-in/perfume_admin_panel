@@ -18,14 +18,18 @@ export const SideNav = () => {
           display: 'flex',
           flexDirection: 'column',
           height: `calc(100% - ${TOP_NAV_HEIGHT}px)`,
-          p: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+          p: 0.5,
           top: TOP_NAV_HEIGHT,
           width: SIDE_NAV_WIDTH,
           zIndex: (theme) => theme.zIndex.appBar - 100
         }
       }}
     >
-      <List sx={{ width: '100%' }}>
+      <List sx={{ width: '100%', py: 0.5 }}>
         {items.map((item) => {
           const active = matchPath({ path: item.href, end: true }, location.pathname);
 
@@ -37,8 +41,13 @@ export const SideNav = () => {
               to={item.href}
               sx={{
                 flexDirection: 'column',
-                px: 2,
-                py: 1.5
+                px: 1,
+                py: 1,
+                borderRadius: 1,
+                mb: 0.25,
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                }
               }}
             >
               <ListItemIcon
@@ -54,7 +63,11 @@ export const SideNav = () => {
                 primaryTypographyProps={{
                   variant: 'caption',
                   sx: {
-                    color: active ? 'primary.main' : 'text.secondary'
+                    color: active ? 'primary.main' : 'text.secondary',
+                    fontSize: '0.6rem',
+                    lineHeight: 1.2,
+                    mt: 0.25,
+                    textAlign: 'center',
                   }
                 }}
               />
