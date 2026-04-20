@@ -4,7 +4,7 @@ import { Footer } from './footer';
 import { SideNav } from './side-nav';
 import { TopNav } from './top-nav';
 
-const SIDE_NAV_WIDTH = 73;
+const SIDE_NAV_WIDTH = 100;
 const TOP_NAV_HEIGHT = 64;
 
 const LayoutRoot = styled('div')(({ theme }) => ({
