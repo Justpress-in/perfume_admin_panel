@@ -31,7 +31,8 @@ const emptyValues = {
 const validationSchema = Yup.object({
   slug: Yup.string().trim().required('Slug is required'),
   nameEn: Yup.string().trim().required('English name is required'),
-  nameAr: Yup.string().trim().required('Arabic name is required')
+  nameAr: Yup.string().trim().required('Arabic name is required'),
+  sortOrder: Yup.number().integer('Must be a whole number').min(0, 'Must be 0 or greater').required()
 });
 
 const toValues = (item) =>
@@ -55,7 +56,7 @@ const toPayload = (v) => ({
   description: { en: v.descriptionEn.trim(), ar: v.descriptionAr.trim() },
   image: v.image.trim(),
   parent: v.parent || null,
-  sortOrder: Number(v.sortOrder) || 0,
+  sortOrder: Math.max(0, Number(v.sortOrder) || 0),
   isActive: v.isActive
 });
 
@@ -181,6 +182,10 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
                 type="number"
                 value={formik.values.sortOrder}
                 onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                inputProps={{ min: 0, step: 1 }}
+                error={Boolean(formik.touched.sortOrder && formik.errors.sortOrder)}
+                helperText={formik.touched.sortOrder && formik.errors.sortOrder}
                 sx={{ maxWidth: 160 }}
               />
             </Stack>

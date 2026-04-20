@@ -17,8 +17,10 @@ import {
 import { api } from 'src/lib/api';
 
 const discountTypes = [
-  { label: 'Percent (%)', value: 'percent' },
-  { label: 'Fixed amount', value: 'fixed' },
+  { label: 'Percentage (%)', value: 'percentage' },
+  { label: 'Fixed amount (RM)', value: 'fixed' },
+  { label: 'Buy One Get One', value: 'bogo' },
+  { label: 'Bundle deal', value: 'bundle' },
   { label: 'None', value: '' }
 ];
 
@@ -71,20 +73,23 @@ const toValues = (item) =>
       }
     : emptyValues;
 
-const toPayload = (v) => ({
-  title: { en: v.titleEn.trim(), ar: v.titleAr.trim() },
-  description: { en: v.descriptionEn.trim(), ar: v.descriptionAr.trim() },
-  image: v.image.trim(),
-  discountType: v.discountType || undefined,
-  discountValue: Number(v.discountValue) || 0,
-  link: v.link.trim(),
-  badge: v.badge.trim(),
-  category: v.category.trim(),
-  startDate: v.startDate || null,
-  endDate: v.endDate || null,
-  sortOrder: Number(v.sortOrder) || 0,
-  isActive: v.isActive
-});
+const toPayload = (v) => {
+  const payload = {
+    title: { en: v.titleEn.trim(), ar: v.titleAr.trim() },
+    description: { en: v.descriptionEn.trim(), ar: v.descriptionAr.trim() },
+    image: v.image.trim(),
+    discountValue: Number(v.discountValue) || 0,
+    link: v.link.trim(),
+    badge: v.badge.trim(),
+    category: v.category.trim(),
+    startDate: v.startDate || null,
+    endDate: v.endDate || null,
+    sortOrder: Number(v.sortOrder) || 0,
+    isActive: v.isActive,
+  };
+  if (v.discountType) payload.discountType = v.discountType;
+  return payload;
+};
 
 export const OfferDialog = ({ open, item, onClose, onSaved }) => {
   const isEdit = Boolean(item?._id);
