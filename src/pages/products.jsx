@@ -50,6 +50,14 @@ const Page = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [snack, setSnack] = useState(null);
+  const [categoryOptions, setCategoryOptions] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/categories').then(({ data }) => {
+      const list = Array.isArray(data?.data) ? data.data : [];
+      setCategoryOptions(list.filter((c) => c.isActive !== false && !c.parent));
+    }).catch(() => {});
+  }, []);
 
   const debouncedSearch = useDebounced(search);
   const debouncedCategory = useDebounced(category);
@@ -172,12 +180,19 @@ const Page = () => {
                   onChange={(e) => setSearch(e.target.value)}
                 />
                 <TextField
+                  select
                   label="Category"
-                  placeholder="e.g. oud"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   sx={{ minWidth: 200 }}
-                />
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {categoryOptions.map((cat) => (
+                    <MenuItem key={cat._id || cat.slug} value={cat.slug || cat.name?.en?.toLowerCase()}>
+                      {cat.name?.en || cat.slug}
+                    </MenuItem>
+                  ))}
+                </TextField>
                 <TextField
                   select
                   label="Status"

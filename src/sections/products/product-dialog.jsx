@@ -13,7 +13,7 @@ import {
   DialogTitle,
   Divider,
   FormControlLabel,
-  IconButton,
+  MenuItem,
   Stack,
   Switch,
   TextField,
@@ -99,6 +99,14 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
   const [submitError, setSubmitError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/categories').then(({ data }) => {
+      const list = Array.isArray(data?.data) ? data.data : [];
+      setCategories(list.filter((c) => c.isActive !== false));
+    }).catch(() => {});
+  }, []);
 
   const previewUrl = useMemo(() => {
     if (imageFile) return URL.createObjectURL(imageFile);
@@ -268,6 +276,7 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
+                select
                 fullWidth
                 label="Category"
                 name="category"
@@ -276,14 +285,47 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
                 onBlur={formik.handleBlur}
                 error={Boolean(formik.touched.category && formik.errors.category)}
                 helperText={formik.touched.category && formik.errors.category}
-              />
+              >
+                {categories.length === 0 && (
+                  <MenuItem value="" disabled>No categories found</MenuItem>
+                )}
+                {categories.map((cat) => (
+                  <MenuItem key={cat._id || cat.slug} value={cat.slug || cat.name?.en?.toLowerCase()}>
+                    {cat.name?.en || cat.slug}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
+                select
                 fullWidth
                 label="Subcategory"
                 name="subcategory"
                 value={formik.values.subcategory}
                 onChange={formik.handleChange}
-              />
+              >
+                <MenuItem value="">— None —</MenuItem>
+                {categories
+                  .find((c) => (c.slug || c.name?.en?.toLowerCase()) === formik.values.category)
+                  ?.children?.map?.((sub) => (
+                    <MenuItem key={sub._id || sub.slug} value={sub.slug || sub.name?.en?.toLowerCase()}>
+                      {sub.name?.en || sub.slug}
+                    </MenuItem>
+                  )) ||
+                  /* fallback: show children filtered by parent match from flat list */
+                  categories
+                    .filter((c) => {
+                      const parentCat = categories.find(
+                        (p) => (p.slug || p.name?.en?.toLowerCase()) === formik.values.category
+                      );
+                      return parentCat && (String(c.parent) === String(parentCat._id));
+                    })
+                    .map((sub) => (
+                      <MenuItem key={sub._id || sub.slug} value={sub.slug || sub.name?.en?.toLowerCase()}>
+                        {sub.name?.en || sub.slug}
+                      </MenuItem>
+                    ))
+                }
+              </TextField>
             </Stack>
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
