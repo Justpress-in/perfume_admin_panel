@@ -45,9 +45,8 @@ const emptyValues = {
   isActive: true,
   isFeatured: false,
   shopee: '',
-  grab: '',
-  lalamove: '',
-  jnt: '',
+  lojada: '',
+  tiktok: '',
   weightValue: '',
   weightUnit: 'g',
   dimLength: '',
@@ -86,9 +85,8 @@ const productToValues = (product) => {
     isActive: product.isActive !== false,
     isFeatured: Boolean(product.isFeatured),
     shopee: product.purchaseLinks?.shopee || '',
-    grab: product.purchaseLinks?.grab || '',
-    lalamove: product.purchaseLinks?.lalamove || '',
-    jnt: product.purchaseLinks?.jnt || '',
+    lojada: product.purchaseLinks?.lojada || '',
+    tiktok: product.purchaseLinks?.tiktok || '',
     weightValue: product.weight?.value ?? '',
     weightUnit: product.weight?.unit || 'g',
     dimLength: product.dimensions?.length ?? '',
@@ -115,9 +113,8 @@ const valuesToPayload = (values) => ({
   isFeatured: values.isFeatured,
   purchaseLinks: {
     shopee: values.shopee.trim(),
-    grab: values.grab.trim(),
-    lalamove: values.lalamove.trim(),
-    jnt: values.jnt.trim(),
+    lojada: values.lojada.trim(),
+    tiktok: values.tiktok.trim(),
   },
   weight: {
     value: values.weightValue !== '' ? Number(values.weightValue) : null,
@@ -683,12 +680,9 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
             </Divider>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField fullWidth label="Shopee" name="shopee" value={formik.values.shopee} onChange={formik.handleChange} />
-              <TextField fullWidth label="Grab" name="grab" value={formik.values.grab} onChange={formik.handleChange} />
+              <TextField fullWidth label="Lojada" name="lojada" value={formik.values.lojada} onChange={formik.handleChange} />
             </Stack>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField fullWidth label="Lalamove" name="lalamove" value={formik.values.lalamove} onChange={formik.handleChange} />
-              <TextField fullWidth label="J&T" name="jnt" value={formik.values.jnt} onChange={formik.handleChange} />
-            </Stack>
+            <TextField fullWidth label="TikTok Shop" name="tiktok" value={formik.values.tiktok} onChange={formik.handleChange} />
 
             {/* ── Toggles ── */}
             <Stack direction="row" spacing={3}>
