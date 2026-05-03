@@ -15,7 +15,9 @@ import {
   Divider,
   FormControlLabel,
   IconButton,
+  InputAdornment,
   MenuItem,
+  Paper,
   Stack,
   Switch,
   TextField,
@@ -28,9 +30,80 @@ import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { api } from 'src/lib/api';
 
+/* ── Inline quick-create panel (category or subcategory) ── */
+const QuickCreate = ({ label, parentId, onCreated, onCancel }) => {
+  const [nameEn, setNameEn] = useState('');
+  const [nameAr, setNameAr] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState('');
+
+  const slugify = (s) =>
+    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  const handleSave = async () => {
+    if (!nameEn.trim()) { setErr('English name is required'); return; }
+    setSaving(true);
+    setErr('');
+    try {
+      const payload = {
+        slug: slugify(nameEn),
+        name: { en: nameEn.trim(), ar: nameAr.trim() },
+        parent: parentId || null,
+        isActive: true,
+        sortOrder: 0,
+      };
+      const { data } = await api.post('/api/categories', payload);
+      onCreated(data?.data);
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'Failed to create');
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+      <Typography variant="subtitle2" gutterBottom>
+        {label}
+      </Typography>
+      <Stack spacing={1.5}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+          <TextField
+            size="small" fullWidth
+            label="Name (English)"
+            value={nameEn}
+            onChange={(e) => setNameEn(e.target.value)}
+            autoFocus
+          />
+          <TextField
+            size="small" fullWidth
+            label="Name (Arabic)"
+            value={nameAr}
+            onChange={(e) => setNameAr(e.target.value)}
+            inputProps={{ dir: 'rtl' }}
+          />
+        </Stack>
+        {err && <Alert severity="error" sx={{ py: 0 }}>{err}</Alert>}
+        <Stack direction="row" spacing={1} justifyContent="flex-end">
+          <Button size="small" color="inherit" onClick={onCancel} disabled={saving}>Cancel</Button>
+          <Button size="small" variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Create'}
+          </Button>
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+};
+
 const PREDEFINED_SIZES = ['5 ml', '10 ml', '15 ml', '20 ml', '25 ml', '30 ml', '50 ml',
   '75 ml', '100 ml', '125 ml', '150 ml', '200 ml', '250 ml', '500 ml', '1 L',
   'XS', 'S', 'M', 'L', 'XL', 'XXL', 'Small', 'Medium', 'Large', 'Travel Size', 'Full Size'];
+
+const GENDER_OPTIONS = [
+  { value: '',        label: '— None —' },
+  { value: 'male',    label: 'Male' },
+  { value: 'female',  label: 'Female' },
+  { value: 'unisex',  label: 'Unisex' },
+];
 
 const emptyValues = {
   nameEn: '',
@@ -39,6 +112,7 @@ const emptyValues = {
   descriptionAr: '',
   category: '',
   subcategory: '',
+  gender: '',
   price: '',
   stock: '',
   features: '',
@@ -79,6 +153,7 @@ const productToValues = (product) => {
     descriptionAr: product.description?.ar || '',
     category: product.category || '',
     subcategory: product.subcategory || '',
+    gender: product.gender || '',
     price: product.price ?? '',
     stock: product.stock ?? '',
     features: Array.isArray(product.features) ? product.features.join(', ') : '',
@@ -104,6 +179,7 @@ const valuesToPayload = (values) => ({
   description: { en: values.descriptionEn.trim(), ar: values.descriptionAr.trim() },
   category: values.category.trim(),
   subcategory: values.subcategory.trim(),
+  gender: values.gender,
   price: Number(values.price),
   stock: Number(values.stock),
   features: values.features
@@ -143,13 +219,16 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
   const [categories, setCategories] = useState([]);
   const [sizeInput, setSizeInput] = useState('');
   const [sizeCustom, setSizeCustom] = useState(false);
+  const [showNewCat, setShowNewCat] = useState(false);
+  const [showNewSub, setShowNewSub] = useState(false);
 
-  useEffect(() => {
-    api.get('/api/categories').then(({ data }) => {
+  const reloadCategories = () =>
+    api.get('/api/categories', { params: { nested: 'true' } }).then(({ data }) => {
       const list = Array.isArray(data?.data) ? data.data : [];
       setCategories(list.filter((c) => c.isActive !== false));
     }).catch(() => {});
-  }, []);
+
+  useEffect(() => { reloadCategories(); }, []);
 
   const primaryPreview = useMemo(() => {
     if (primaryFile) return URL.createObjectURL(primaryFile);
@@ -232,6 +311,8 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
     setSubmitError(null);
     setSizeInput('');
     setSizeCustom(false);
+    setShowNewCat(false);
+    setShowNewSub(false);
     formik.resetForm();
     onClose?.();
   };
@@ -437,51 +518,122 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
               />
             </Stack>
 
-            {/* ── Category / Subcategory ── */}
+            {/* ── Category / Subcategory / Gender ── */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+              {/* Category */}
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  select fullWidth label="Category" name="category"
+                  value={formik.values.category}
+                  onChange={(e) => {
+                    formik.handleChange(e);
+                    formik.setFieldValue('subcategory', '');
+                    setShowNewSub(false);
+                  }}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(formik.touched.category && formik.errors.category)}
+                  helperText={formik.touched.category && formik.errors.category}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end" sx={{ mr: 2 }}>
+                        <Tooltip title="Add new category">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); setShowNewCat((v) => !v); setShowNewSub(false); }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    )
+                  }}
+                >
+                  {categories.length === 0 && <MenuItem value="" disabled>No categories found</MenuItem>}
+                  {categories.map((cat) => (
+                    <MenuItem key={cat._id || cat.slug} value={cat.slug}>
+                      {cat.name?.en || cat.slug}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+
+              {/* Subcategory */}
+              <Box sx={{ flex: 1 }}>
+                <TextField
+                  select fullWidth label="Subcategory" name="subcategory"
+                  value={formik.values.subcategory}
+                  onChange={formik.handleChange}
+                  disabled={!formik.values.category}
+                  InputProps={{
+                    endAdornment: formik.values.category ? (
+                      <InputAdornment position="end" sx={{ mr: 2 }}>
+                        <Tooltip title="Add new subcategory">
+                          <IconButton
+                            size="small"
+                            onClick={(e) => { e.stopPropagation(); setShowNewSub((v) => !v); setShowNewCat(false); }}
+                          >
+                            <AddIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ) : null
+                  }}
+                >
+                  <MenuItem value="">— None —</MenuItem>
+                  {(
+                    categories
+                      .find((c) => c.slug === formik.values.category)
+                      ?.children
+                      ?.filter((s) => s.isActive !== false)
+                      ?.map((sub) => (
+                        <MenuItem key={sub._id || sub.slug} value={sub.slug}>
+                          {sub.name?.en || sub.slug}
+                        </MenuItem>
+                      )) || []
+                  )}
+                </TextField>
+              </Box>
+
+              {/* Gender */}
               <TextField
-                select fullWidth label="Category" name="category"
-                value={formik.values.category}
+                select fullWidth label="Gender" name="gender"
+                value={formik.values.gender}
                 onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={Boolean(formik.touched.category && formik.errors.category)}
-                helperText={formik.touched.category && formik.errors.category}
               >
-                {categories.length === 0 && <MenuItem value="" disabled>No categories found</MenuItem>}
-                {categories.map((cat) => (
-                  <MenuItem key={cat._id || cat.slug} value={cat.slug || cat.name?.en?.toLowerCase()}>
-                    {cat.name?.en || cat.slug}
-                  </MenuItem>
+                {GENDER_OPTIONS.map((g) => (
+                  <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
                 ))}
               </TextField>
-              <TextField
-                select fullWidth label="Subcategory" name="subcategory"
-                value={formik.values.subcategory}
-                onChange={formik.handleChange}
-              >
-                <MenuItem value="">— None —</MenuItem>
-                {(
-                  categories.find((c) => (c.slug || c.name?.en?.toLowerCase()) === formik.values.category)
-                    ?.children?.map?.((sub) => (
-                      <MenuItem key={sub._id || sub.slug} value={sub.slug || sub.name?.en?.toLowerCase()}>
-                        {sub.name?.en || sub.slug}
-                      </MenuItem>
-                    )) ||
-                  categories
-                    .filter((c) => {
-                      const parentCat = categories.find(
-                        (p) => (p.slug || p.name?.en?.toLowerCase()) === formik.values.category
-                      );
-                      return parentCat && (String(c.parent) === String(parentCat._id));
-                    })
-                    .map((sub) => (
-                      <MenuItem key={sub._id || sub.slug} value={sub.slug || sub.name?.en?.toLowerCase()}>
-                        {sub.name?.en || sub.slug}
-                      </MenuItem>
-                    ))
-                )}
-              </TextField>
             </Stack>
+
+            {/* Quick-create: new top-level category */}
+            {showNewCat && (
+              <QuickCreate
+                label="New category"
+                parentId={null}
+                onCreated={async (created) => {
+                  await reloadCategories();
+                  formik.setFieldValue('category', created.slug);
+                  formik.setFieldValue('subcategory', '');
+                  setShowNewCat(false);
+                }}
+                onCancel={() => setShowNewCat(false)}
+              />
+            )}
+
+            {/* Quick-create: new subcategory under selected category */}
+            {showNewSub && formik.values.category && (
+              <QuickCreate
+                label={`New subcategory under "${categories.find(c => c.slug === formik.values.category)?.name?.en || formik.values.category}"`}
+                parentId={categories.find(c => c.slug === formik.values.category)?._id}
+                onCreated={async (created) => {
+                  await reloadCategories();
+                  formik.setFieldValue('subcategory', created.slug);
+                  setShowNewSub(false);
+                }}
+                onCancel={() => setShowNewSub(false)}
+              />
+            )}
 
             {/* ── Base Price / Stock ── */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>

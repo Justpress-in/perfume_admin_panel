@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
   Alert,
+  Avatar,
+  Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,8 +15,11 @@ import {
   MenuItem,
   Stack,
   Switch,
-  TextField
+  TextField,
+  Typography
 } from '@mui/material';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { api } from 'src/lib/api';
 
 const emptyValues = {
@@ -22,7 +28,6 @@ const emptyValues = {
   nameAr: '',
   descriptionEn: '',
   descriptionAr: '',
-  image: '',
   parent: '',
   sortOrder: 0,
   isActive: true
@@ -43,7 +48,6 @@ const toValues = (item) =>
         nameAr: item.name?.ar || '',
         descriptionEn: item.description?.en || '',
         descriptionAr: item.description?.ar || '',
-        image: item.image || '',
         parent: item.parent?._id || item.parent || '',
         sortOrder: item.sortOrder ?? 0,
         isActive: item.isActive !== false
@@ -54,7 +58,6 @@ const toPayload = (v) => ({
   slug: v.slug.trim(),
   name: { en: v.nameEn.trim(), ar: v.nameAr.trim() },
   description: { en: v.descriptionEn.trim(), ar: v.descriptionAr.trim() },
-  image: v.image.trim(),
   parent: v.parent || null,
   sortOrder: Math.max(0, Number(v.sortOrder) || 0),
   isActive: v.isActive
@@ -63,6 +66,13 @@ const toPayload = (v) => ({
 export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) => {
   const isEdit = Boolean(item?._id);
   const [submitError, setSubmitError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
+
+  const imagePreview = imageFile
+    ? URL.createObjectURL(imageFile)
+    : item?.image || '';
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -75,7 +85,27 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
         const { data } = isEdit
           ? await api.put(`/api/categories/${item._id}`, payload)
           : await api.post('/api/categories', payload);
-        onSaved?.(data?.data, { created: !isEdit });
+
+        let saved = data?.data;
+
+        // Upload image if one was selected
+        if (imageFile && saved?._id) {
+          setUploading(true);
+          try {
+            const form = new FormData();
+            form.append('image', imageFile);
+            const { data: up } = await api.post(
+              `/api/categories/${saved._id}/image`,
+              form,
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            if (up?.data) saved = up.data;
+          } finally {
+            setUploading(false);
+          }
+        }
+
+        onSaved?.(saved, { created: !isEdit });
         handleClose(true);
       } catch (err) {
         setSubmitError(err?.response?.data?.message || 'Save failed');
@@ -85,8 +115,9 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
   });
 
   const handleClose = (force = false) => {
-    if (!force && formik.isSubmitting) return;
+    if (!force && (formik.isSubmitting || uploading)) return;
     setSubmitError(null);
+    setImageFile(null);
     formik.resetForm();
     onClose?.();
   };
@@ -99,6 +130,55 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
       <DialogContent dividers>
         <form id="category-form" onSubmit={formik.handleSubmit} noValidate>
           <Stack spacing={2}>
+
+            {/* ── Category image ── */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Avatar
+                src={imagePreview || undefined}
+                variant="rounded"
+                sx={{ width: 80, height: 80, bgcolor: 'neutral.100', flexShrink: 0 }}
+              >
+                <PhotoCameraIcon color="disabled" />
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>Category image</Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<PhotoCameraIcon />}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    {imageFile ? 'Replace' : imagePreview ? 'Change' : 'Upload image'}
+                  </Button>
+                  {imageFile && (
+                    <Button
+                      size="small"
+                      color="inherit"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => setImageFile(null)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  PNG or JPG. Uploaded after saving.
+                </Typography>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) setImageFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </Box>
+            </Stack>
+
             <TextField
               fullWidth
               label="Slug"
@@ -153,13 +233,6 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
                 inputProps={{ dir: 'rtl' }}
               />
             </Stack>
-            <TextField
-              fullWidth
-              label="Image URL"
-              name="image"
-              value={formik.values.image}
-              onChange={formik.handleChange}
-            />
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 fullWidth
@@ -204,14 +277,22 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
         </form>
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={() => handleClose()} disabled={formik.isSubmitting}>
+        <Box sx={{ flex: 1 }}>
+          {uploading && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={16} />
+              <Typography variant="caption" color="text.secondary">Uploading image…</Typography>
+            </Stack>
+          )}
+        </Box>
+        <Button onClick={() => handleClose()} disabled={formik.isSubmitting || uploading}>
           Cancel
         </Button>
         <Button
           type="submit"
           form="category-form"
           variant="contained"
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || uploading}
         >
           {formik.isSubmitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </Button>

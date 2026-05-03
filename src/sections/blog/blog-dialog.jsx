@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
   Alert,
+  Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,6 +17,8 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { api } from 'src/lib/api';
 
 const emptyValues = {
@@ -25,7 +29,6 @@ const emptyValues = {
   bodyEn: '',
   bodyAr: '',
   tags: '',
-  image: '',
   published: false
 };
 
@@ -46,7 +49,6 @@ const postToValues = (post) => {
     bodyEn: post.body?.en || '',
     bodyAr: post.body?.ar || '',
     tags: Array.isArray(post.tags) ? post.tags.join(', ') : '',
-    image: post.image || '',
     published: Boolean(post.published)
   };
 };
@@ -58,13 +60,19 @@ const valuesToPayload = (values) => ({
   tags: values.tags
     ? values.tags.split(',').map((t) => t.trim()).filter(Boolean)
     : [],
-  image: values.image.trim(),
   published: values.published
 });
 
 export const BlogDialog = ({ open, post, onClose, onSaved }) => {
   const isEdit = Boolean(post?._id);
   const [submitError, setSubmitError] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
+
+  const imagePreview = imageFile
+    ? URL.createObjectURL(imageFile)
+    : post?.image || '';
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -82,6 +90,24 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
           const { data } = await api.post('/api/blog', payload);
           saved = data?.data;
         }
+
+        // Upload cover image if selected
+        if (imageFile && saved?._id) {
+          setUploading(true);
+          try {
+            const form = new FormData();
+            form.append('image', imageFile);
+            const { data: up } = await api.post(
+              `/api/blog/${saved._id}/image`,
+              form,
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            if (up?.data) saved = up.data;
+          } finally {
+            setUploading(false);
+          }
+        }
+
         onSaved?.(saved, { created: !isEdit });
         handleClose(true);
       } catch (err) {
@@ -92,8 +118,9 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
   });
 
   const handleClose = (force = false) => {
-    if (!force && formik.isSubmitting) return;
+    if (!force && (formik.isSubmitting || uploading)) return;
     setSubmitError(null);
+    setImageFile(null);
     formik.resetForm();
     onClose?.();
   };
@@ -104,6 +131,7 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
       <DialogContent dividers>
         <form id="blog-form" onSubmit={formik.handleSubmit} noValidate>
           <Stack spacing={3}>
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 fullWidth
@@ -130,18 +158,14 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                fullWidth
-                multiline
-                minRows={2}
+                fullWidth multiline minRows={2}
                 label="Excerpt (English)"
                 name="excerptEn"
                 value={formik.values.excerptEn}
                 onChange={formik.handleChange}
               />
               <TextField
-                fullWidth
-                multiline
-                minRows={2}
+                fullWidth multiline minRows={2}
                 label="Excerpt (Arabic)"
                 name="excerptAr"
                 value={formik.values.excerptAr}
@@ -152,9 +176,7 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                fullWidth
-                multiline
-                minRows={6}
+                fullWidth multiline minRows={6}
                 label="Body (English)"
                 name="bodyEn"
                 value={formik.values.bodyEn}
@@ -164,9 +186,7 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
                 helperText={formik.touched.bodyEn && formik.errors.bodyEn}
               />
               <TextField
-                fullWidth
-                multiline
-                minRows={6}
+                fullWidth multiline minRows={6}
                 label="Body (Arabic)"
                 name="bodyAr"
                 value={formik.values.bodyAr}
@@ -179,19 +199,64 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
             </Stack>
 
             <Divider textAlign="left">
-              <Typography variant="caption" color="text.secondary">
-                Meta
-              </Typography>
+              <Typography variant="caption" color="text.secondary">Meta</Typography>
             </Divider>
 
-            <TextField
-              fullWidth
-              label="Cover image URL"
-              name="image"
-              placeholder="https://…"
-              value={formik.values.image}
-              onChange={formik.handleChange}
-            />
+            {/* ── Cover image upload ── */}
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>Cover image</Typography>
+              {imagePreview && (
+                <Box
+                  component="img"
+                  src={imagePreview}
+                  alt="cover preview"
+                  sx={{
+                    width: '100%',
+                    maxHeight: 220,
+                    objectFit: 'cover',
+                    borderRadius: 2,
+                    mb: 1.5,
+                    border: '1px solid',
+                    borderColor: 'divider'
+                  }}
+                />
+              )}
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<PhotoCameraIcon />}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  {imagePreview ? 'Replace image' : 'Upload cover image'}
+                </Button>
+                {imageFile && (
+                  <Button
+                    size="small"
+                    color="inherit"
+                    startIcon={<DeleteOutlineIcon />}
+                    onClick={() => setImageFile(null)}
+                  >
+                    Remove
+                  </Button>
+                )}
+              </Stack>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                PNG or JPG. Uploaded after the post is saved.
+              </Typography>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setImageFile(f);
+                  e.target.value = '';
+                }}
+              />
+            </Box>
+
             <TextField
               fullWidth
               label="Tags"
@@ -216,15 +281,24 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
           </Stack>
         </form>
       </DialogContent>
+
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={() => handleClose()} disabled={formik.isSubmitting}>
+        <Box sx={{ flex: 1 }}>
+          {uploading && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={16} />
+              <Typography variant="caption" color="text.secondary">Uploading image…</Typography>
+            </Stack>
+          )}
+        </Box>
+        <Button onClick={() => handleClose()} disabled={formik.isSubmitting || uploading}>
           Cancel
         </Button>
         <Button
           type="submit"
           form="blog-form"
           variant="contained"
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || uploading}
         >
           {formik.isSubmitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create post'}
         </Button>

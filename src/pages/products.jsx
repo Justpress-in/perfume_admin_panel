@@ -53,9 +53,9 @@ const Page = () => {
   const [categoryOptions, setCategoryOptions] = useState([]);
 
   useEffect(() => {
-    api.get('/api/categories').then(({ data }) => {
+    api.get('/api/categories', { params: { nested: 'true' } }).then(({ data }) => {
       const list = Array.isArray(data?.data) ? data.data : [];
-      setCategoryOptions(list.filter((c) => c.isActive !== false && !c.parent));
+      setCategoryOptions(list.filter((c) => c.isActive !== false));
     }).catch(() => {});
   }, []);
 
