@@ -13,6 +13,7 @@ import BuildingStorefrontIcon from "@heroicons/react/24/solid/BuildingStorefront
 import TicketIcon from "@heroicons/react/24/solid/TicketIcon"
 import QueueListIcon from "@heroicons/react/24/solid/QueueListIcon"
 import Square3Stack3DIcon from "@heroicons/react/24/solid/Square3Stack3DIcon"
+import InformationCircleIcon from "@heroicons/react/24/solid/InformationCircleIcon"
 import { SvgIcon } from '@mui/material';
 
 const icon = (Component) => (
