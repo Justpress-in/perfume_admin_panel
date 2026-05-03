@@ -4,7 +4,7 @@ import MagnifyingGlassIcon from '@heroicons/react/24/outline/MagnifyingGlassIcon
 import { InputBase, SvgIcon } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
-const QueryFieldRoot = styled('div')((({ theme }) => ({
+const QueryFieldRoot = styled('div')(({ theme }) => ({
   alignItems: 'center',
   backgroundColor: 'background.paper',
   border: `1px solid ${theme.palette.divider}`,
@@ -12,69 +12,43 @@ const QueryFieldRoot = styled('div')((({ theme }) => ({
   display: 'flex',
   height: 42,
   padding: '0 16px'
-})));
+}));
 
-export const QueryField = (props) => {
-  const { disabled, onChange, placeholder, value: initialValue = '', ...other } = props;
-  const [autoFocus, setAutoFocus] = useState(false);
-  const inputRef = useRef(null);
-  const [value, setValue] = useState('');
+export const QueryField = ({ disabled, onChange, placeholder, value: initialValue = '', debounce = 350, ...other }) => {
+  const [value, setValue] = useState(initialValue);
+  const timerRef = useRef(null);
 
+  // Sync if parent resets the value
   useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
 
-  useEffect(() => {
-      if (!disabled && autoFocus && inputRef?.current) {
-        inputRef.current.focus();
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [disabled]);
+  const handleChange = useCallback((e) => {
+    const v = e.target.value;
+    setValue(v);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => onChange?.(v), debounce);
+  }, [onChange, debounce]);
 
-  const handleChange = useCallback((event) => {
-    setValue(event.target.value);
-  }, []);
-
-  const handleKeyup = useCallback((event) => {
-    if (event.code === 'Enter') {
+  // Fire immediately on Enter too
+  const handleKeyUp = useCallback((e) => {
+    if (e.key === 'Enter') {
+      clearTimeout(timerRef.current);
       onChange?.(value);
     }
-  }, [value, onChange]);
+  }, [onChange, value]);
 
-  const handleFocus = useCallback(() => {
-    setAutoFocus(true);
-  }, []);
-
-  const handleBlur = useCallback((event) => {
-    /*
-     There is a situation where an input goes from not disabled to disabled and DOM emits a blur
-     event, with event as undefined. This means, that sometimes we'll receive an React Synthetic
-     event and sometimes undefined because when DOM triggers the event, React is unaware of it,
-     or it simply does not emit the event. To bypass this behaviour, we store a local variable
-     that acts as autofocus.
-     */
-
-    if (event) {
-      setAutoFocus(false);
-    }
-  }, []);
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   return (
     <QueryFieldRoot {...other}>
-      <SvgIcon
-        fontSize="small"
-        sx={{ mr: 1 }}
-      >
+      <SvgIcon fontSize="small" sx={{ mr: 1 }}>
         <MagnifyingGlassIcon />
       </SvgIcon>
       <InputBase
         disabled={disabled}
-        inputProps={{ ref: inputRef }}
-        onBlur={handleBlur}
         onChange={handleChange}
-        onFocus={handleFocus}
-        onKeyUp={handleKeyup}
+        onKeyUp={handleKeyUp}
         placeholder={placeholder}
         sx={{ flexGrow: 1 }}
         value={value}
@@ -84,6 +58,7 @@ export const QueryField = (props) => {
 };
 
 QueryField.propTypes = {
+  debounce: PropTypes.number,
   disabled: PropTypes.bool,
   onChange: PropTypes.func,
   placeholder: PropTypes.string,
