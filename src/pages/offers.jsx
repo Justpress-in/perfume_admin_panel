@@ -138,6 +138,7 @@ const Page = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell>Offer</TableCell>
+                        <TableCell>Products</TableCell>
                         <TableCell>Discount</TableCell>
                         <TableCell>Window</TableCell>
                         <TableCell>Status</TableCell>
@@ -147,7 +148,7 @@ const Page = () => {
                     <TableBody>
                       {items.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={5}>
+                          <TableCell colSpan={6}>
                             <Typography
                               color="text.secondary"
                               variant="body2"
@@ -173,6 +174,12 @@ const Page = () => {
                                 )}
                               </Stack>
                             </Stack>
+                          </TableCell>
+                          <TableCell>
+                            {Array.isArray(o.products) && o.products.length > 0
+                              ? <Chip size="small" label={`${o.products.length} product${o.products.length !== 1 ? 's' : ''}`} />
+                              : <Typography variant="caption" color="text.secondary">—</Typography>
+                            }
                           </TableCell>
                           <TableCell>{discountLabel(o)}</TableCell>
                           <TableCell>
