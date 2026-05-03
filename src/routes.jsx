@@ -17,6 +17,7 @@ import StoresPage from './pages/stores';
 import TestimonialsPage from './pages/testimonials';
 import UsersPage from './pages/users';
 import OrderStatusesPage from './pages/order-statuses';
+import SubcategoriesPage from './pages/subcategories';
 
 export const routes = [
   {
@@ -42,6 +43,7 @@ export const routes = [
       { path: 'users', element: <UsersPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'categories', element: <CategoriesPage /> },
+      { path: 'subcategories', element: <SubcategoriesPage /> },
       { path: 'offers', element: <OffersPage /> },
       { path: 'banners', element: <BannersPage /> },
       { path: 'blog', element: <BlogPage /> },

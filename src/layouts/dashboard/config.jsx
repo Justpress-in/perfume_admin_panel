@@ -12,6 +12,7 @@ import StarIcon from "@heroicons/react/24/solid/StarIcon"
 import BuildingStorefrontIcon from "@heroicons/react/24/solid/BuildingStorefrontIcon"
 import TicketIcon from "@heroicons/react/24/solid/TicketIcon"
 import QueueListIcon from "@heroicons/react/24/solid/QueueListIcon"
+import Square3Stack3DIcon from "@heroicons/react/24/solid/Square3Stack3DIcon"
 import { SvgIcon } from '@mui/material';
 
 const icon = (Component) => (
@@ -26,7 +27,14 @@ export const items = [
   { href: '/order-statuses', icon: icon(QueueListIcon), label: 'Order Statuses' },
   { href: '/users', icon: icon(UsersIcon), label: 'Users' },
   { href: '/products', icon: icon(CubeIcon), label: 'Products' },
-  { href: '/categories', icon: icon(RectangleStackIcon), label: 'Categories' },
+  {
+    icon: icon(RectangleStackIcon),
+    label: 'Categories',
+    children: [
+      { href: '/categories', icon: icon(RectangleStackIcon), label: 'Categories' },
+      { href: '/subcategories', icon: icon(Square3Stack3DIcon), label: 'Subcategories' },
+    ]
+  },
   { href: '/offers', icon: icon(TagIcon), label: 'Offers' },
   { href: '/banners', icon: icon(PhotoIcon), label: 'Banners' },
   { href: '/blog', icon: icon(NewspaperIcon), label: 'Blog' },
