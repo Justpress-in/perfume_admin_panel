@@ -52,6 +52,7 @@ export const routes = [
       { path: 'testimonials', element: <TestimonialsPage /> },
       { path: 'stores', element: <StoresPage /> },
       { path: 'coupons', element: <CouponsPage /> },
+      { path: 'about', element: <AboutPage /> },
       { path: 'settings', element: <SettingsPage /> }
     ]
   },
