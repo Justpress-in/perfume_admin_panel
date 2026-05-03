@@ -63,7 +63,7 @@ const toPayload = (v) => ({
   isActive: v.isActive
 });
 
-export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) => {
+export const CategoryDialog = ({ open, item, parents = [], hideParent = false, onClose, onSaved }) => {
   const isEdit = Boolean(item?._id);
   const [submitError, setSubmitError] = useState(null);
   const [imageFile, setImageFile] = useState(null);
@@ -234,21 +234,23 @@ export const CategoryDialog = ({ open, item, parents = [], onClose, onSaved }) =
               />
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-                fullWidth
-                select
-                label="Parent category"
-                name="parent"
-                value={formik.values.parent}
-                onChange={formik.handleChange}
-              >
-                <MenuItem value="">None</MenuItem>
-                {availableParents.map((p) => (
-                  <MenuItem key={p._id} value={p._id}>
-                    {p.name?.en || p.slug}
-                  </MenuItem>
-                ))}
-              </TextField>
+              {!hideParent && (
+                <TextField
+                  fullWidth
+                  select
+                  label="Parent category"
+                  name="parent"
+                  value={formik.values.parent}
+                  onChange={formik.handleChange}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  {availableParents.map((p) => (
+                    <MenuItem key={p._id} value={p._id}>
+                      {p.name?.en || p.slug}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
               <TextField
                 label="Sort order"
                 name="sortOrder"

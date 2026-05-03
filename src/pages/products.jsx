@@ -40,6 +40,7 @@ const Page = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [subcategory, setSubcategory] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
   const [items, setItems] = useState([]);
@@ -60,16 +61,23 @@ const Page = () => {
   }, []);
 
   const debouncedSearch = useDebounced(search);
-  const debouncedCategory = useDebounced(category);
+
+  // Subcategory options derived from the selected category's children
+  const subcategoryOptions = useMemo(() => {
+    if (!category) return [];
+    const cat = categoryOptions.find((c) => c.slug === category);
+    return cat?.children?.filter((s) => s.isActive !== false) || [];
+  }, [category, categoryOptions]);
 
   const params = useMemo(() => {
     const p = { page: page + 1, limit: rowsPerPage };
     if (debouncedSearch.trim()) p.search = debouncedSearch.trim();
-    if (debouncedCategory.trim()) p.category = debouncedCategory.trim();
+    if (category.trim()) p.category = category.trim();
+    if (subcategory.trim()) p.subcategory = subcategory.trim();
     if (statusFilter === 'active') p.isActive = 'true';
     if (statusFilter === 'inactive') p.isActive = 'false';
     return p;
-  }, [page, rowsPerPage, debouncedSearch, debouncedCategory, statusFilter]);
+  }, [page, rowsPerPage, debouncedSearch, category, subcategory, statusFilter]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -93,7 +101,7 @@ const Page = () => {
 
   useEffect(() => {
     setPage(0);
-  }, [debouncedSearch, debouncedCategory, statusFilter, rowsPerPage]);
+  }, [debouncedSearch, category, subcategory, statusFilter, rowsPerPage]);
 
   const handleOpenCreate = () => {
     setEditing(null);
@@ -183,13 +191,28 @@ const Page = () => {
                   select
                   label="Category"
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  sx={{ minWidth: 200 }}
+                  onChange={(e) => { setCategory(e.target.value); setSubcategory(''); }}
+                  sx={{ minWidth: 180 }}
                 >
-                  <MenuItem value="">All</MenuItem>
+                  <MenuItem value="">All categories</MenuItem>
                   {categoryOptions.map((cat) => (
-                    <MenuItem key={cat._id || cat.slug} value={cat.slug || cat.name?.en?.toLowerCase()}>
+                    <MenuItem key={cat._id || cat.slug} value={cat.slug}>
                       {cat.name?.en || cat.slug}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  label="Subcategory"
+                  value={subcategory}
+                  onChange={(e) => setSubcategory(e.target.value)}
+                  disabled={subcategoryOptions.length === 0}
+                  sx={{ minWidth: 180 }}
+                >
+                  <MenuItem value="">All subcategories</MenuItem>
+                  {subcategoryOptions.map((sub) => (
+                    <MenuItem key={sub._id || sub.slug} value={sub.slug}>
+                      {sub.name?.en || sub.slug}
                     </MenuItem>
                   ))}
                 </TextField>

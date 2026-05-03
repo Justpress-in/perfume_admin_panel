@@ -41,7 +41,7 @@ const Page = () => {
     setLoading(true);
     setError(null);
     try {
-      const { data } = await api.get('/api/categories');
+      const { data } = await api.get('/api/categories', { params: { parent: 'null' } });
       setItems(Array.isArray(data?.data) ? data.data : []);
     } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load categories');
@@ -129,7 +129,6 @@ const Page = () => {
                       <TableRow>
                         <TableCell>Category</TableCell>
                         <TableCell>Slug</TableCell>
-                        <TableCell>Parent</TableCell>
                         <TableCell>Status</TableCell>
                         <TableCell>Sort</TableCell>
                         <TableCell align="right" />
@@ -138,7 +137,7 @@ const Page = () => {
                     <TableBody>
                       {items.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={6}>
+                          <TableCell colSpan={5}>
                             <Typography
                               color="text.secondary"
                               variant="body2"
@@ -170,7 +169,6 @@ const Page = () => {
                           <TableCell>
                             <Chip size="small" variant="outlined" label={c.slug} />
                           </TableCell>
-                          <TableCell>{c.parent?.name?.en || c.parent?.slug || '—'}</TableCell>
                           <TableCell>{c.isActive ? 'Active' : 'Inactive'}</TableCell>
                           <TableCell>{c.sortOrder ?? 0}</TableCell>
                           <TableCell align="right">
@@ -203,7 +201,8 @@ const Page = () => {
       <CategoryDialog
         open={dialogOpen}
         item={editing}
-        parents={items}
+        parents={[]}
+        hideParent
         onClose={() => {
           setDialogOpen(false);
           setEditing(null);
