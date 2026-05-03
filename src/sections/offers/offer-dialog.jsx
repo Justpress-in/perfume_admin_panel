@@ -41,9 +41,6 @@ const emptyValues = {
   descriptionAr: '',
   discountType: '',
   discountValue: 0,
-  link: '',
-  badge: '',
-  category: '',
   startDate: '',
   endDate: '',
   sortOrder: 0,
@@ -72,9 +69,6 @@ const toValues = (item) =>
         descriptionAr: item.description?.ar || '',
         discountType: item.discountType || '',
         discountValue: item.discountValue ?? 0,
-        link: item.link || '',
-        badge: item.badge || '',
-        category: item.category || '',
         startDate: isoToInput(item.startDate),
         endDate: isoToInput(item.endDate),
         sortOrder: item.sortOrder ?? 0,
@@ -90,9 +84,6 @@ const toPayload = (v) => {
     title: { en: v.titleEn.trim(), ar: v.titleAr.trim() },
     description: { en: v.descriptionEn.trim(), ar: v.descriptionAr.trim() },
     discountValue: Number(v.discountValue) || 0,
-    link: v.link.trim(),
-    badge: v.badge.trim(),
-    category: v.category.trim(),
     startDate: v.startDate || null,
     endDate: v.endDate || null,
     sortOrder: Number(v.sortOrder) || 0,
@@ -386,28 +377,6 @@ export const OfferDialog = ({ open, item, onClose, onSaved }) => {
                 label="Discount value"
                 name="discountValue"
                 value={formik.values.discountValue}
-                onChange={formik.handleChange}
-              />
-            </Stack>
-
-            {/* Link / Badge / Category */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-                fullWidth label="Link"
-                name="link"
-                value={formik.values.link}
-                onChange={formik.handleChange}
-              />
-              <TextField
-                fullWidth label="Badge"
-                name="badge"
-                value={formik.values.badge}
-                onChange={formik.handleChange}
-              />
-              <TextField
-                fullWidth label="Category"
-                name="category"
-                value={formik.values.category}
                 onChange={formik.handleChange}
               />
             </Stack>

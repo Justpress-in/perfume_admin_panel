@@ -119,7 +119,7 @@ const emptyValues = {
   isActive: true,
   isFeatured: false,
   shopee: '',
-  lojada: '',
+  lozada: '',
   tiktok: '',
   weightValue: '',
   weightUnit: 'g',
@@ -160,7 +160,7 @@ const productToValues = (product) => {
     isActive: product.isActive !== false,
     isFeatured: Boolean(product.isFeatured),
     shopee: product.purchaseLinks?.shopee || '',
-    lojada: product.purchaseLinks?.lojada || '',
+    lozada: product.purchaseLinks?.lozada || '',
     tiktok: product.purchaseLinks?.tiktok || '',
     weightValue: product.weight?.value ?? '',
     weightUnit: product.weight?.unit || 'g',
@@ -189,7 +189,7 @@ const valuesToPayload = (values) => ({
   isFeatured: values.isFeatured,
   purchaseLinks: {
     shopee: values.shopee.trim(),
-    lojada: values.lojada.trim(),
+    lozada: values.lozada.trim(),
     tiktok: values.tiktok.trim(),
   },
   weight: {
@@ -221,6 +221,8 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
   const [sizeCustom, setSizeCustom] = useState(false);
   const [showNewCat, setShowNewCat] = useState(false);
   const [showNewSub, setShowNewSub] = useState(false);
+  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const [deletingIdx, setDeletingIdx] = useState(null);
 
   const reloadCategories = () =>
     api.get('/api/categories', { params: { nested: 'true' } }).then(({ data }) => {
@@ -351,9 +353,6 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
     updated[idx] = { ...updated[idx], label: val };
     formik.setFieldValue('sizeVariants', updated);
   };
-
-  const [existingImages, setExistingImages] = useState(product?.images || []);
-  const [deletingIdx, setDeletingIdx] = useState(null);
 
   // Keep existingImages in sync when product prop changes (dialog re-opens)
   useEffect(() => {
@@ -871,7 +870,7 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
             </Divider>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField fullWidth label="Shopee" name="shopee" value={formik.values.shopee} onChange={formik.handleChange} />
-              <TextField fullWidth label="Lojada" name="lojada" value={formik.values.lojada} onChange={formik.handleChange} />
+              <TextField fullWidth label="Lozada" name="lozada" value={formik.values.lozada} onChange={formik.handleChange} />
             </Stack>
             <TextField fullWidth label="TikTok Shop" name="tiktok" value={formik.values.tiktok} onChange={formik.handleChange} />
 
