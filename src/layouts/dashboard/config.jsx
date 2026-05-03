@@ -43,5 +43,6 @@ export const items = [
   { href: '/testimonials', icon: icon(ChatBubbleLeftRightIcon), label: 'Testimonials' },
   { href: '/stores', icon: icon(BuildingStorefrontIcon), label: 'Stores' },
   { href: '/coupons', icon: icon(TicketIcon), label: 'Coupons' },
+  { href: '/about', icon: icon(InformationCircleIcon), label: 'About Page' },
   { href: '/settings', icon: icon(CogIcon), label: 'Settings' }
 ];

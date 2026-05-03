@@ -18,6 +18,7 @@ import TestimonialsPage from './pages/testimonials';
 import UsersPage from './pages/users';
 import OrderStatusesPage from './pages/order-statuses';
 import SubcategoriesPage from './pages/subcategories';
+import AboutPage from './pages/about';
 
 export const routes = [
   {
