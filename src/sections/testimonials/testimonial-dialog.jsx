@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import {
   Alert,
+  Avatar,
+  Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -15,12 +18,13 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { api } from 'src/lib/api';
 
 const emptyValues = {
   name: '',
   location: '',
-  avatar: '',
   textEn: '',
   textAr: '',
   rating: 5,
@@ -40,7 +44,6 @@ const toValues = (item) =>
     ? {
         name: item.name || '',
         location: item.location || '',
-        avatar: item.avatar || '',
         textEn: item.text?.en || '',
         textAr: item.text?.ar || '',
         rating: item.rating ?? 5,
@@ -52,7 +55,6 @@ const toValues = (item) =>
 const toPayload = (v) => ({
   name: v.name.trim(),
   location: v.location.trim(),
-  avatar: v.avatar.trim(),
   text: { en: v.textEn.trim(), ar: v.textAr.trim() },
   rating: Number(v.rating),
   sortOrder: Number(v.sortOrder) || 0,
@@ -62,6 +64,13 @@ const toPayload = (v) => ({
 export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
   const isEdit = Boolean(item?._id);
   const [submitError, setSubmitError] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
+
+  const avatarPreview = avatarFile
+    ? URL.createObjectURL(avatarFile)
+    : item?.avatar || '';
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -74,7 +83,26 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
         const { data } = isEdit
           ? await api.put(`/api/testimonials/${item._id}`, payload)
           : await api.post('/api/testimonials', payload);
-        onSaved?.(data?.data, { created: !isEdit });
+
+        let saved = data?.data;
+
+        if (avatarFile && saved?._id) {
+          setUploading(true);
+          try {
+            const form = new FormData();
+            form.append('image', avatarFile);
+            const { data: up } = await api.post(
+              `/api/testimonials/${saved._id}/avatar`,
+              form,
+              { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            if (up?.data) saved = up.data;
+          } finally {
+            setUploading(false);
+          }
+        }
+
+        onSaved?.(saved, { created: !isEdit });
         handleClose(true);
       } catch (err) {
         setSubmitError(err?.response?.data?.message || 'Save failed');
@@ -84,8 +112,9 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
   });
 
   const handleClose = (force = false) => {
-    if (!force && formik.isSubmitting) return;
+    if (!force && (formik.isSubmitting || uploading)) return;
     setSubmitError(null);
+    setAvatarFile(null);
     formik.resetForm();
     onClose?.();
   };
@@ -96,11 +125,57 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
       <DialogContent dividers>
         <form id="testimonial-form" onSubmit={formik.handleSubmit} noValidate>
           <Stack spacing={2}>
+
+            {/* ── Avatar upload ── */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Avatar
+                src={avatarPreview || undefined}
+                sx={{ width: 72, height: 72, flexShrink: 0 }}
+              >
+                {!avatarPreview && <PhotoCameraIcon color="disabled" />}
+              </Avatar>
+              <Box>
+                <Typography variant="subtitle2" gutterBottom>Avatar photo</Typography>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<PhotoCameraIcon />}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    {avatarPreview ? 'Replace' : 'Upload photo'}
+                  </Button>
+                  {avatarFile && (
+                    <Button
+                      size="small"
+                      color="inherit"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => setAvatarFile(null)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </Stack>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                  PNG or JPG. Uploaded after saving.
+                </Typography>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) setAvatarFile(f);
+                    e.target.value = '';
+                  }}
+                />
+              </Box>
+            </Stack>
+
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
-                fullWidth
-                label="Name"
-                name="name"
+                fullWidth label="Name" name="name"
                 value={formik.values.name}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
@@ -108,26 +183,15 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
                 helperText={formik.touched.name && formik.errors.name}
               />
               <TextField
-                fullWidth
-                label="Location"
-                name="location"
+                fullWidth label="Location" name="location"
                 value={formik.values.location}
                 onChange={formik.handleChange}
               />
             </Stack>
+
             <TextField
-              fullWidth
-              label="Avatar URL"
-              name="avatar"
-              value={formik.values.avatar}
-              onChange={formik.handleChange}
-            />
-            <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Text (English)"
-              name="textEn"
+              fullWidth multiline minRows={3}
+              label="Text (English)" name="textEn"
               value={formik.values.textEn}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -135,11 +199,8 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
               helperText={formik.touched.textEn && formik.errors.textEn}
             />
             <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Text (Arabic)"
-              name="textAr"
+              fullWidth multiline minRows={3}
+              label="Text (Arabic)" name="textAr"
               value={formik.values.textAr}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -147,11 +208,10 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
               helperText={formik.touched.textAr && formik.errors.textAr}
               inputProps={{ dir: 'rtl' }}
             />
+
             <Stack direction="row" spacing={3} alignItems="center">
               <Stack spacing={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Rating
-                </Typography>
+                <Typography variant="caption" color="text.secondary">Rating</Typography>
                 <Rating
                   name="rating"
                   value={Number(formik.values.rating) || 0}
@@ -159,9 +219,7 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
                 />
               </Stack>
               <TextField
-                label="Sort order"
-                name="sortOrder"
-                type="number"
+                label="Sort order" name="sortOrder" type="number"
                 value={formik.values.sortOrder}
                 onChange={formik.handleChange}
                 sx={{ maxWidth: 160 }}
@@ -177,19 +235,29 @@ export const TestimonialDialog = ({ open, item, onClose, onSaved }) => {
                 label="Published"
               />
             </Stack>
+
             {submitError && <Alert severity="error">{submitError}</Alert>}
           </Stack>
         </form>
       </DialogContent>
+
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={() => handleClose()} disabled={formik.isSubmitting}>
+        <Box sx={{ flex: 1 }}>
+          {uploading && (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={16} />
+              <Typography variant="caption" color="text.secondary">Uploading photo…</Typography>
+            </Stack>
+          )}
+        </Box>
+        <Button onClick={() => handleClose()} disabled={formik.isSubmitting || uploading}>
           Cancel
         </Button>
         <Button
           type="submit"
           form="testimonial-form"
           variant="contained"
-          disabled={formik.isSubmitting}
+          disabled={formik.isSubmitting || uploading}
         >
           {formik.isSubmitting ? 'Saving…' : isEdit ? 'Save changes' : 'Create'}
         </Button>
