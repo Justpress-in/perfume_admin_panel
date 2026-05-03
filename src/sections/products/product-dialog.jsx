@@ -232,8 +232,8 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
 
   const primaryPreview = useMemo(() => {
     if (primaryFile) return URL.createObjectURL(primaryFile);
-    return product?.image || '';
-  }, [primaryFile, product]);
+    return existingImages[0]?.url || product?.image || '';
+  }, [primaryFile, existingImages, product]);
 
   useEffect(() => {
     return () => {
