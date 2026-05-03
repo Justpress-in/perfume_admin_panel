@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useFormik } from 'formik';
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -14,9 +15,104 @@ import {
   Stack,
   Switch,
   TextField,
+  Tooltip,
   Typography
 } from '@mui/material';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { api } from 'src/lib/api';
+
+/* Reusable inline upload widget for logo / favicon */
+const AssetUploader = ({ label, hint, currentUrl, slot, onUploaded }) => {
+  const fileRef = useRef(null);
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+
+  const preview = file ? URL.createObjectURL(file) : currentUrl || '';
+
+  const handleUpload = async (selected) => {
+    setFile(selected);
+    setError('');
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append('image', selected);
+      const { data } = await api.post(
+        `/api/settings/upload?slot=${slot}`,
+        form,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      onUploaded?.(data?.url || '');
+      setFile(null);
+    } catch (e) {
+      setError(e?.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <Box sx={{ flex: 1 }}>
+      <Typography variant="subtitle2" gutterBottom>{label}</Typography>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Avatar
+          src={preview || undefined}
+          variant="rounded"
+          sx={{
+            width: slot === 'favicon' ? 48 : 80,
+            height: slot === 'favicon' ? 48 : 80,
+            bgcolor: 'neutral.100',
+            border: '1px solid',
+            borderColor: 'divider',
+            flexShrink: 0,
+            '& img': { objectFit: 'contain' }
+          }}
+        >
+          <PhotoCameraIcon color="disabled" />
+        </Avatar>
+        <Stack spacing={0.75}>
+          <Stack direction="row" spacing={1}>
+            <Tooltip title={`Upload ${label}`}>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={uploading ? <CircularProgress size={14} /> : <PhotoCameraIcon />}
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+              >
+                {uploading ? 'Uploading…' : preview ? 'Replace' : 'Upload'}
+              </Button>
+            </Tooltip>
+            {preview && !uploading && (
+              <Button
+                size="small"
+                color="inherit"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => onUploaded?.('')}
+              >
+                Remove
+              </Button>
+            )}
+          </Stack>
+          <Typography variant="caption" color="text.secondary">{hint}</Typography>
+          {error && <Typography variant="caption" color="error.main">{error}</Typography>}
+        </Stack>
+      </Stack>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) handleUpload(f);
+          e.target.value = '';
+        }}
+      />
+    </Box>
+  );
+};
 
 const emptyValues = {
   siteNameEn: '',
@@ -88,8 +184,6 @@ const toValues = (data) => {
 const toPayload = (v) => ({
   siteName: { en: v.siteNameEn.trim(), ar: v.siteNameAr.trim() },
   tagline: { en: v.taglineEn.trim(), ar: v.taglineAr.trim() },
-  logo: v.logo.trim(),
-  favicon: v.favicon.trim(),
   contactEmail: v.contactEmail.trim(),
   contactPhone: v.contactPhone.trim(),
   whatsapp: v.whatsapp.trim(),
@@ -224,20 +318,20 @@ const Page = () => {
                           inputProps={{ dir: 'rtl' }}
                         />
                       </Stack>
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                        <TextField
-                          fullWidth
-                          label="Logo URL"
-                          name="logo"
-                          value={formik.values.logo}
-                          onChange={formik.handleChange}
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+                        <AssetUploader
+                          label="Logo"
+                          hint="PNG or SVG recommended. Shown in the header and emails."
+                          slot="logo"
+                          currentUrl={formik.values.logo}
+                          onUploaded={(url) => formik.setFieldValue('logo', url)}
                         />
-                        <TextField
-                          fullWidth
-                          label="Favicon URL"
-                          name="favicon"
-                          value={formik.values.favicon}
-                          onChange={formik.handleChange}
+                        <AssetUploader
+                          label="Favicon"
+                          hint="ICO, PNG 32×32 or 64×64. Shown in browser tabs."
+                          slot="favicon"
+                          currentUrl={formik.values.favicon}
+                          onUploaded={(url) => formik.setFieldValue('favicon', url)}
                         />
                       </Stack>
                     </Section>
