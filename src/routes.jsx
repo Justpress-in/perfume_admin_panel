@@ -16,6 +16,7 @@ import SettingsPage from './pages/settings';
 import StoresPage from './pages/stores';
 import TestimonialsPage from './pages/testimonials';
 import UsersPage from './pages/users';
+import OrderStatusesPage from './pages/order-statuses';
 
 export const routes = [
   {
@@ -37,6 +38,7 @@ export const routes = [
     children: [
       { index: true, element: <ReportsPage /> },
       { path: 'orders', element: <OrdersPage /> },
+      { path: 'order-statuses', element: <OrderStatusesPage /> },
       { path: 'users', element: <UsersPage /> },
       { path: 'products', element: <ProductsPage /> },
       { path: 'categories', element: <CategoriesPage /> },

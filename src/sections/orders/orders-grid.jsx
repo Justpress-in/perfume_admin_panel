@@ -17,20 +17,12 @@ import {
   Typography
 } from '@mui/material';
 
-const statusMap = {
-  pending: { color: 'default', dotColor: 'neutral.500', label: 'Pending' },
-  processing: { color: 'info', dotColor: 'info.main', label: 'Processing' },
-  shipped: { color: 'warning', dotColor: 'warning.main', label: 'Shipped' },
-  delivered: { color: 'success', dotColor: 'success.main', label: 'Delivered' },
-  cancelled: { color: 'error', dotColor: 'error.main', label: 'Cancelled' },
-};
-
-const STATUS_OPTIONS = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-
-const OrderCard = ({ order, onStatusChange }) => {
+const OrderCard = ({ order, onStatusChange, statuses }) => {
   const [anchor, setAnchor] = useState(null);
   const id = order._id || order.id;
-  const statusInfo = statusMap[order.status] || { color: 'default', label: order.status || '—' };
+  const statusDef = statuses.find((s) => s.value === order.status);
+  const statusColor = statusDef?.color || '#9e9e9e';
+  const statusLabel = statusDef?.label || order.status || '—';
   const createdAt = order.createdAt ? new Date(order.createdAt) : null;
   const createdDate = createdAt ? format(createdAt, 'dd MMM yyyy') : '—';
   const totalAmount = typeof order.total === 'number' ? order.total.toFixed(2) : '—';
@@ -42,22 +34,21 @@ const OrderCard = ({ order, onStatusChange }) => {
         <Typography variant="subtitle2" fontWeight={700}>#{orderNum}</Typography>
         <Stack direction="row" alignItems="center" spacing={0.5}>
           <Chip
-            label={statusInfo.label}
-            color={statusInfo.color}
+            label={statusLabel}
             size="small"
-            sx={{ textTransform: 'capitalize', fontSize: 11 }}
+            sx={{ textTransform: 'capitalize', fontSize: 11, bgcolor: statusColor, color: '#fff' }}
           />
           <IconButton size="small" onClick={(e) => setAnchor(e.currentTarget)}>
             <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
           </IconButton>
           <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-            {STATUS_OPTIONS.map((s) => (
+            {statuses.map((s) => (
               <MenuItem
-                key={s}
-                onClick={() => { onStatusChange(id, s); setAnchor(null); }}
-                sx={{ textTransform: 'capitalize' }}
+                key={s.value}
+                onClick={() => { onStatusChange(id, s.value); setAnchor(null); }}
               >
-                Mark as {s}
+                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s.color, mr: 1.5, flexShrink: 0 }} />
+                {s.label}
               </MenuItem>
             ))}
           </Menu>
@@ -100,6 +91,7 @@ export const OrdersGrid = ({
   onPageChange = () => {},
   onRowsPerPageChange,
   onStatusChange = () => {},
+  statuses = [],
 }) => {
   return (
     <Box>
@@ -112,7 +104,7 @@ export const OrdersGrid = ({
           <Grid container spacing={2}>
             {items.map((order) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={order._id || order.id}>
-                <OrderCard order={order} onStatusChange={onStatusChange} />
+                <OrderCard order={order} onStatusChange={onStatusChange} statuses={statuses} />
               </Grid>
             ))}
           </Grid>
@@ -140,9 +132,11 @@ OrdersGrid.propTypes = {
   onPageChange: PropTypes.func,
   onRowsPerPageChange: PropTypes.func,
   onStatusChange: PropTypes.func,
+  statuses: PropTypes.array,
 };
 
 OrderCard.propTypes = {
   order: PropTypes.object.isRequired,
   onStatusChange: PropTypes.func.isRequired,
+  statuses: PropTypes.array.isRequired,
 };

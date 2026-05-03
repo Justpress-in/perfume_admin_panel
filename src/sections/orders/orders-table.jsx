@@ -21,37 +21,23 @@ import {
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
 
-const statusMap = {
-  pending: { color: 'neutral.500', label: 'Pending' },
-  processing: { color: 'info.main', label: 'Processing' },
-  delivered: { color: 'success.main', label: 'Delivered' },
-  cancelled: { color: 'error.main', label: 'Cancelled' },
-  complete: { color: 'success.main', label: 'Complete' },
-  created: { color: 'neutral.500', label: 'Created' },
-  placed: { color: 'info.main', label: 'Placed' },
-  processed: { color: 'warning.main', label: 'Processed' }
-};
-
-const STATUS_OPTIONS = ['pending', 'processing', 'delivered', 'cancelled'];
-
-const OrderRowMenu = ({ orderId, onStatusChange }) => {
+const OrderRowMenu = ({ orderId, onStatusChange, statuses }) => {
   const [anchor, setAnchor] = useState(null);
 
   return (
     <>
       <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
-        <SvgIcon fontSize="small">
-          <EllipsisVerticalIcon />
-        </SvgIcon>
+        <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
       </IconButton>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-        {STATUS_OPTIONS.map((s) => (
+        {statuses.map((s) => (
           <MenuItem
-            key={s}
-            onClick={() => { onStatusChange(orderId, s); setAnchor(null); }}
+            key={s.value}
+            onClick={() => { onStatusChange(orderId, s.value); setAnchor(null); }}
             sx={{ textTransform: 'capitalize' }}
           >
-            Mark as {s}
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s.color, mr: 1.5, flexShrink: 0 }} />
+            {s.label}
           </MenuItem>
         ))}
       </Menu>
@@ -67,7 +53,8 @@ export const OrdersTable = (props) => {
     page = 0,
     rowsPerPage = 0,
     onRowsPerPageChange,
-    onStatusChange = () => {}
+    onStatusChange = () => {},
+    statuses = [],
   } = props;
 
   return (
@@ -95,7 +82,10 @@ export const OrdersTable = (props) => {
             ) : (
               items.map((order) => {
                 const id = order._id || order.id;
-                const statusInfo = statusMap[order.status] || { color: 'neutral.500', label: order.status || '—' };
+                const statusDef = statuses.find((s) => s.value === order.status);
+                const statusInfo = statusDef
+                  ? { color: statusDef.color, label: statusDef.label }
+                  : { color: '#9e9e9e', label: order.status || '—' };
                 const createdAt = order.createdAt ? new Date(order.createdAt) : null;
                 const createdDate = createdAt ? format(createdAt, 'dd MMM yyyy') : '—';
                 const createdTime = createdAt ? format(createdAt, 'HH:mm') : '';
@@ -125,15 +115,7 @@ export const OrdersTable = (props) => {
                     </TableCell>
                     <TableCell>
                       <Stack alignItems="center" direction="row" spacing={1}>
-                        <Box
-                          sx={{
-                            backgroundColor: statusInfo.color,
-                            borderRadius: '50%',
-                            height: 8,
-                            width: 8,
-                            flexShrink: 0
-                          }}
-                        />
+                        <Box sx={{ bgcolor: statusInfo.color, borderRadius: '50%', height: 8, width: 8, flexShrink: 0 }} />
                         <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
                           {statusInfo.label}
                         </Typography>
@@ -141,7 +123,7 @@ export const OrdersTable = (props) => {
                     </TableCell>
                     <TableCell>{totalAmount}</TableCell>
                     <TableCell align="right">
-                      <OrderRowMenu orderId={id} onStatusChange={onStatusChange} />
+                      <OrderRowMenu orderId={id} onStatusChange={onStatusChange} statuses={statuses} />
                     </TableCell>
                   </TableRow>
                 );
@@ -171,5 +153,6 @@ OrdersTable.propTypes = {
   rowsPerPage: PropTypes.number,
   onPageChange: PropTypes.func,
   onRowsPerPageChange: PropTypes.func,
-  onStatusChange: PropTypes.func
+  onStatusChange: PropTypes.func,
+  statuses: PropTypes.array,
 };

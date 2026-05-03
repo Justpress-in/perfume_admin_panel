@@ -19,6 +19,13 @@ const Page = () => {
   const [error, setError] = useState(null);
   const [snack, setSnack] = useState(null);
   const [mode, setMode] = useState('table');
+  const [statuses, setStatuses] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/order-statuses')
+      .then(({ data }) => setStatuses(Array.isArray(data?.data) ? data.data : []))
+      .catch(() => {});
+  }, []);
 
   const params = useMemo(() => {
     const p = { page: page + 1, limit: rowsPerPage };
@@ -123,6 +130,7 @@ const Page = () => {
                 onFiltersChange={handleFiltersChange}
                 mode={mode}
                 onModeChange={setMode}
+                statuses={statuses}
               />
               <Divider />
               {loading ? (
@@ -138,6 +146,7 @@ const Page = () => {
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
                   onStatusChange={handleStatusChange}
+                  statuses={statuses}
                 />
               ) : (
                 <OrdersGrid
@@ -148,6 +157,7 @@ const Page = () => {
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
                   onStatusChange={handleStatusChange}
+                  statuses={statuses}
                 />
               )}
             </Card>

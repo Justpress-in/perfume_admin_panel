@@ -20,14 +20,6 @@ import {
 } from '@mui/material';
 import { QueryField } from 'src/components/query-field';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'shipped', label: 'Shipped' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
 
 const CHANNEL_OPTIONS = [
   { value: '', label: 'All channels' },
@@ -38,7 +30,11 @@ const CHANNEL_OPTIONS = [
   { value: 'wholesale', label: 'Wholesale' },
 ];
 
-export const OrdersSearch = ({ mode = 'table', onModeChange, onQueryChange, query, filters, onFiltersChange }) => {
+export const OrdersSearch = ({ mode = 'table', onModeChange, onQueryChange, query, filters, onFiltersChange, statuses = [] }) => {
+  const STATUS_OPTIONS = [
+    { value: '', label: 'All statuses' },
+    ...statuses.map((s) => ({ value: s.value, label: s.label })),
+  ];
   const [open, setOpen] = useState(false);
 
   const activeFilterCount = [filters?.status, filters?.channel, filters?.startDate, filters?.endDate]
@@ -201,4 +197,5 @@ OrdersSearch.propTypes = {
   query: PropTypes.string,
   filters: PropTypes.object,
   onFiltersChange: PropTypes.func,
+  statuses: PropTypes.array,
 };
