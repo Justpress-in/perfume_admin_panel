@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Alert, Box, Button, Card, CircularProgress, Container, Divider, Snackbar, Stack, Typography } from '@mui/material';
 import { OrdersSearch } from 'src/sections/orders/orders-search';
 import { OrdersTable } from 'src/sections/orders/orders-table';
+import { OrdersGrid } from 'src/sections/orders/orders-grid';
 import { api } from 'src/lib/api';
 
 const EMPTY_FILTERS = { status: '', channel: '', startDate: '', endDate: '' };
@@ -17,6 +18,7 @@ const Page = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [snack, setSnack] = useState(null);
+  const [mode, setMode] = useState('table');
 
   const params = useMemo(() => {
     const p = { page: page + 1, limit: rowsPerPage };
@@ -119,14 +121,26 @@ const Page = () => {
                 onQueryChange={handleQueryChange}
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
+                mode={mode}
+                onModeChange={setMode}
               />
               <Divider />
               {loading ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
                   <CircularProgress />
                 </Box>
-              ) : (
+              ) : mode === 'table' ? (
                 <OrdersTable
+                  count={total}
+                  items={items}
+                  page={page}
+                  rowsPerPage={rowsPerPage}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  onStatusChange={handleStatusChange}
+                />
+              ) : (
+                <OrdersGrid
                   count={total}
                   items={items}
                   page={page}
