@@ -352,7 +352,26 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
     formik.setFieldValue('sizeVariants', updated);
   };
 
-  const existingImages = product?.images || [];
+  const [existingImages, setExistingImages] = useState(product?.images || []);
+  const [deletingIdx, setDeletingIdx] = useState(null);
+
+  // Keep existingImages in sync when product prop changes (dialog re-opens)
+  useEffect(() => {
+    setExistingImages(product?.images || []);
+  }, [product]);
+
+  const handleDeleteSavedImage = async (arrayIdx) => {
+    if (!product?._id) return;
+    setDeletingIdx(arrayIdx);
+    try {
+      const { data } = await api.delete(`/api/products/${product._id}/images/${arrayIdx}`);
+      setExistingImages(data?.data?.images || []);
+    } catch {
+      // silently ignore; image stays visible
+    } finally {
+      setDeletingIdx(null);
+    }
+  };
 
   return (
     <Dialog open={open} onClose={() => handleClose()} fullWidth maxWidth="md">
@@ -409,19 +428,39 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
             <Box>
               <Typography variant="subtitle2" gutterBottom>Additional photos</Typography>
 
-              {/* Existing saved images (edit mode) */}
-              {isEdit && existingImages.length > 1 && (
+              {/* Existing saved images (edit mode) — all including primary at index 0 */}
+              {isEdit && existingImages.length > 0 && (
                 <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 1 }}>
-                  {existingImages.slice(1).map((img, idx) => (
-                    <Box key={idx} sx={{ position: 'relative', width: 72, height: 72 }}>
+                  {existingImages.map((img, arrayIdx) => (
+                    <Box key={arrayIdx} sx={{ position: 'relative' }}>
                       <Avatar
                         src={img.url}
                         variant="rounded"
-                        sx={{ width: 72, height: 72 }}
+                        sx={{ width: 72, height: 72, opacity: deletingIdx === arrayIdx ? 0.4 : 1 }}
                       />
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', fontSize: 10 }}>
-                        saved
+                        {arrayIdx === 0 ? 'primary' : 'saved'}
                       </Typography>
+                      <IconButton
+                        size="small"
+                        disabled={deletingIdx !== null}
+                        onClick={() => handleDeleteSavedImage(arrayIdx)}
+                        sx={{
+                          position: 'absolute', top: -8, right: -8,
+                          bgcolor: 'error.main',
+                          color: '#fff',
+                          border: '1px solid',
+                          borderColor: 'error.dark',
+                          p: 0.25,
+                          '&:hover': { bgcolor: 'error.dark' },
+                          '&.Mui-disabled': { bgcolor: 'action.disabledBackground' },
+                        }}
+                      >
+                        {deletingIdx === arrayIdx
+                          ? <CircularProgress size={12} sx={{ color: '#fff' }} />
+                          : <CloseIcon sx={{ fontSize: 14 }} />
+                        }
+                      </IconButton>
                     </Box>
                   ))}
                 </Stack>
