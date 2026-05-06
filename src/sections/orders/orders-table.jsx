@@ -2,11 +2,13 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import EllipsisVerticalIcon from '@heroicons/react/24/solid/EllipsisVerticalIcon';
+import EyeIcon from '@heroicons/react/24/outline/EyeIcon';
 import {
   Box,
   Divider,
   IconButton,
   Link,
+  ListItemIcon,
   Menu,
   MenuItem,
   Stack,
@@ -20,8 +22,9 @@ import {
   Typography
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
+import { OrderDetailDrawer } from './order-detail-drawer';
 
-const OrderRowMenu = ({ orderId, onStatusChange, statuses }) => {
+const OrderRowMenu = ({ orderId, onStatusChange, onViewDetails, statuses }) => {
   const [anchor, setAnchor] = useState(null);
 
   return (
@@ -30,6 +33,13 @@ const OrderRowMenu = ({ orderId, onStatusChange, statuses }) => {
         <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
       </IconButton>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+        <MenuItem onClick={() => { onViewDetails(orderId); setAnchor(null); }}>
+          <ListItemIcon>
+            <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
+          </ListItemIcon>
+          View Details
+        </MenuItem>
+        <Divider />
         {statuses.map((s) => (
           <MenuItem
             key={s.value}
@@ -56,6 +66,8 @@ export const OrdersTable = (props) => {
     onStatusChange = () => {},
     statuses = [],
   } = props;
+
+  const [drawerOrderId, setDrawerOrderId] = useState(null);
 
   return (
     <div>
@@ -123,7 +135,12 @@ export const OrdersTable = (props) => {
                     </TableCell>
                     <TableCell>{totalAmount}</TableCell>
                     <TableCell align="right">
-                      <OrderRowMenu orderId={id} onStatusChange={onStatusChange} statuses={statuses} />
+                      <OrderRowMenu
+                        orderId={id}
+                        onStatusChange={onStatusChange}
+                        onViewDetails={(oid) => setDrawerOrderId(oid)}
+                        statuses={statuses}
+                      />
                     </TableCell>
                   </TableRow>
                 );
@@ -141,6 +158,16 @@ export const OrdersTable = (props) => {
         page={page}
         onPageChange={onPageChange}
         onRowsPerPageChange={onRowsPerPageChange}
+      />
+      <OrderDetailDrawer
+        orderId={drawerOrderId}
+        open={Boolean(drawerOrderId)}
+        onClose={() => setDrawerOrderId(null)}
+        statuses={statuses}
+        onStatusChange={(oid, status) => {
+          onStatusChange(oid, status);
+          // update label in drawer without closing
+        }}
       />
     </div>
   );

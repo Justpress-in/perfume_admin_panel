@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import EllipsisVerticalIcon from '@heroicons/react/24/solid/EllipsisVerticalIcon';
+import EyeIcon from '@heroicons/react/24/outline/EyeIcon';
 import {
   Box,
   Card,
@@ -9,6 +10,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Stack,
@@ -16,8 +18,9 @@ import {
   TablePagination,
   Typography
 } from '@mui/material';
+import { OrderDetailDrawer } from './order-detail-drawer';
 
-const OrderCard = ({ order, onStatusChange, statuses }) => {
+const OrderCard = ({ order, onStatusChange, onViewDetails, statuses }) => {
   const [anchor, setAnchor] = useState(null);
   const id = order._id || order.id;
   const statusDef = statuses.find((s) => s.value === order.status);
@@ -42,6 +45,13 @@ const OrderCard = ({ order, onStatusChange, statuses }) => {
             <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
           </IconButton>
           <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
+            <MenuItem onClick={() => { onViewDetails(id); setAnchor(null); }}>
+              <ListItemIcon>
+                <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
+              </ListItemIcon>
+              View Details
+            </MenuItem>
+            <Divider />
             {statuses.map((s) => (
               <MenuItem
                 key={s.value}
@@ -93,6 +103,8 @@ export const OrdersGrid = ({
   onStatusChange = () => {},
   statuses = [],
 }) => {
+  const [drawerOrderId, setDrawerOrderId] = useState(null);
+
   return (
     <Box>
       {items.length === 0 ? (
@@ -104,12 +116,24 @@ export const OrdersGrid = ({
           <Grid container spacing={2}>
             {items.map((order) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={order._id || order.id}>
-                <OrderCard order={order} onStatusChange={onStatusChange} statuses={statuses} />
+                <OrderCard
+                  order={order}
+                  onStatusChange={onStatusChange}
+                  onViewDetails={(oid) => setDrawerOrderId(oid)}
+                  statuses={statuses}
+                />
               </Grid>
             ))}
           </Grid>
         </Box>
       )}
+      <OrderDetailDrawer
+        orderId={drawerOrderId}
+        open={Boolean(drawerOrderId)}
+        onClose={() => setDrawerOrderId(null)}
+        statuses={statuses}
+        onStatusChange={onStatusChange}
+      />
       <Divider />
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
