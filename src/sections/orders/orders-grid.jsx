@@ -10,7 +10,6 @@ import {
   Divider,
   Grid,
   IconButton,
-  ListItemIcon,
   Menu,
   MenuItem,
   Stack,
@@ -41,17 +40,13 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, statuses }) => {
             size="small"
             sx={{ textTransform: 'capitalize', fontSize: 11, bgcolor: statusColor, color: '#fff' }}
           />
+          <IconButton size="small" onClick={() => onViewDetails(id)} title="View Details">
+            <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
+          </IconButton>
           <IconButton size="small" onClick={(e) => setAnchor(e.currentTarget)}>
             <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
           </IconButton>
           <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-            <MenuItem onClick={() => { onViewDetails(id); setAnchor(null); }}>
-              <ListItemIcon>
-                <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
-              </ListItemIcon>
-              View Details
-            </MenuItem>
-            <Divider />
             {statuses.map((s) => (
               <MenuItem
                 key={s.value}

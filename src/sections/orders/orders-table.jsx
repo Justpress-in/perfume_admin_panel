@@ -8,7 +8,6 @@ import {
   Divider,
   IconButton,
   Link,
-  ListItemIcon,
   Menu,
   MenuItem,
   Stack,
@@ -28,18 +27,14 @@ const OrderRowMenu = ({ orderId, onStatusChange, onViewDetails, statuses }) => {
   const [anchor, setAnchor] = useState(null);
 
   return (
-    <>
+    <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={0.5}>
+      <IconButton size="small" onClick={() => onViewDetails(orderId)} title="View Details">
+        <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
+      </IconButton>
       <IconButton onClick={(e) => setAnchor(e.currentTarget)}>
         <SvgIcon fontSize="small"><EllipsisVerticalIcon /></SvgIcon>
       </IconButton>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>
-        <MenuItem onClick={() => { onViewDetails(orderId); setAnchor(null); }}>
-          <ListItemIcon>
-            <SvgIcon fontSize="small"><EyeIcon /></SvgIcon>
-          </ListItemIcon>
-          View Details
-        </MenuItem>
-        <Divider />
         {statuses.map((s) => (
           <MenuItem
             key={s.value}
@@ -51,7 +46,7 @@ const OrderRowMenu = ({ orderId, onStatusChange, onViewDetails, statuses }) => {
           </MenuItem>
         ))}
       </Menu>
-    </>
+    </Stack>
   );
 };
 
