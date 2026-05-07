@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import {
   Alert,
@@ -21,6 +21,7 @@ import {
   Typography,
 } from '@mui/material';
 import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
+import PrinterIcon from '@heroicons/react/24/outline/PrinterIcon';
 import { SvgIcon } from '@mui/material';
 import { api } from 'src/lib/api';
 
@@ -40,6 +41,51 @@ export const OrderDetailDrawer = ({ orderId, open, onClose, statuses = [], onSta
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [changingStatus, setChangingStatus] = useState(false);
+  const printRef = useRef(null);
+
+  const handlePrint = () => {
+    if (!order || !printRef.current) return;
+    const content = printRef.current.innerHTML;
+    const win = window.open('', '_blank', 'width=420,height=700');
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt – ${order.orderId || orderId}</title>
+          <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; color: #111; background: #fff; padding: 24px 20px; width: 380px; }
+            .receipt-header { text-align: center; margin-bottom: 16px; }
+            .receipt-header .brand { font-size: 18px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+            .receipt-header .sub { font-size: 10px; color: #555; margin-top: 2px; letter-spacing: 1px; }
+            .receipt-header .order-id { font-size: 13px; font-weight: 700; margin-top: 10px; }
+            .receipt-header .date { font-size: 10px; color: #555; margin-top: 2px; }
+            .divider { border: none; border-top: 1px dashed #aaa; margin: 12px 0; }
+            .divider-solid { border: none; border-top: 1px solid #111; margin: 12px 0; }
+            .section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 6px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 12px; }
+            .row .label { color: #555; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+            .items-table th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #555; padding: 4px 0; border-bottom: 1px dashed #aaa; text-align: left; }
+            .items-table th:last-child, .items-table td:last-child { text-align: right; }
+            .items-table th:nth-child(2), .items-table td:nth-child(2) { text-align: center; }
+            .items-table td { padding: 5px 0; font-size: 12px; border-bottom: 1px dashed #eee; }
+            .total-row { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-top: 6px; }
+            .status-badge { display: inline-block; padding: 2px 10px; border: 1px solid #111; border-radius: 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+            .footer { text-align: center; margin-top: 20px; font-size: 10px; color: #555; line-height: 1.6; }
+            @media print {
+              body { padding: 0; }
+              @page { margin: 10mm; size: 80mm auto; }
+            }
+          </style>
+        </head>
+        <body>${content}</body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 400);
+  };
 
   useEffect(() => {
     if (!open || !orderId) return;
@@ -300,8 +346,91 @@ export const OrderDetailDrawer = ({ orderId, open, onClose, statuses = [], onSta
 
       {/* ── Footer ── */}
       <Box sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Button fullWidth variant="outlined" onClick={onClose}>Close</Button>
+        <Stack direction="row" spacing={1.5}>
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<SvgIcon fontSize="small"><PrinterIcon /></SvgIcon>}
+            onClick={handlePrint}
+            disabled={!order || loading}
+          >
+            Print Receipt
+          </Button>
+          <Button fullWidth variant="outlined" onClick={onClose}>Close</Button>
+        </Stack>
       </Box>
+
+      {/* ── Hidden printable receipt ── */}
+      {order && (
+        <Box ref={printRef} sx={{ display: 'none' }}>
+          {/* Header */}
+          <div className="receipt-header">
+            <div className="brand">OUD AL-ANOOD</div>
+            <div className="sub">Luxury Fragrance Boutique</div>
+            <div className="sub">Bukit Bintang Kiosk K15, Kuala Lumpur</div>
+            <div className="sub">+60 13-268 8779 | Sales@oudalanood.com</div>
+            <hr className="divider" />
+            <div className="order-id">{order.orderId || `#${orderId?.slice(-6).toUpperCase()}`}</div>
+            <div className="date">{order.createdAt ? format(new Date(order.createdAt), 'dd MMM yyyy, HH:mm') : ''}</div>
+            <div><span className="status-badge">{statuses.find(s => s.value === order.status)?.label || order.status}</span></div>
+          </div>
+
+          <hr className="divider" />
+
+          {/* Customer */}
+          <div className="section-title">Customer</div>
+          <div className="row"><span className="label">Name</span><span>{order.customer?.name || '—'}</span></div>
+          {order.customer?.email && <div className="row"><span className="label">Email</span><span>{order.customer.email}</span></div>}
+          {order.customer?.phone && <div className="row"><span className="label">Phone</span><span>{order.customer.phone}</span></div>}
+          {order.notes && <div className="row"><span className="label">Address</span><span style={{ maxWidth: '200px', textAlign: 'right' }}>{order.notes}</span></div>}
+
+          <hr className="divider" />
+
+          {/* Items */}
+          <div className="section-title">Items</div>
+          <table className="items-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(order.items || []).map((item, idx) => {
+                const name = item.productSnapshot?.name?.en || item.product?.name?.en || 'Product';
+                return (
+                  <tr key={idx}>
+                    <td>{name}</td>
+                    <td>{item.quantity}</td>
+                    <td>RM {(item.price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          <hr className="divider" />
+
+          {/* Totals */}
+          <div className="row"><span className="label">Subtotal</span><span>RM {Number(order.subtotal ?? order.total).toFixed(2)}</span></div>
+          {order.discount > 0 && (
+            <div className="row"><span className="label">Discount {order.couponCode ? `(${order.couponCode})` : ''}</span><span>− RM {Number(order.discount).toFixed(2)}</span></div>
+          )}
+          <div className="row"><span className="label">Shipping</span><span>Free</span></div>
+          <hr className="divider-solid" />
+          <div className="total-row"><span>TOTAL</span><span>RM {Number(order.total).toFixed(2)}</span></div>
+
+          <hr className="divider" />
+
+          {/* Footer */}
+          <div className="footer">
+            <div>Channel: {order.channel} {order.isWholesale ? '· Wholesale' : ''}</div>
+            <div style={{ marginTop: '12px' }}>Thank you for your purchase!</div>
+            <div>www.oud-al-anood.com</div>
+          </div>
+        </Box>
+      )}
     </Drawer>
   );
 };
