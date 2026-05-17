@@ -29,6 +29,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import { api } from 'src/lib/api';
+import { DescriptionBlocksEditor } from './description-blocks-editor';
 
 /* ── Inline quick-create panel (category or subcategory) ── */
 const QuickCreate = ({ label, parentId, onCreated, onCancel }) => {
@@ -110,6 +111,7 @@ const emptyValues = {
   nameAr: '',
   descriptionEn: '',
   descriptionAr: '',
+  descriptionBlocks: [],
   category: '',
   subcategory: '',
   gender: '',
@@ -151,6 +153,7 @@ const productToValues = (product) => {
     nameAr: product.name?.ar || '',
     descriptionEn: product.description?.en || '',
     descriptionAr: product.description?.ar || '',
+    descriptionBlocks: Array.isArray(product.descriptionBlocks) ? product.descriptionBlocks : [],
     category: product.category || '',
     subcategory: product.subcategory || '',
     gender: product.gender || '',
@@ -177,6 +180,7 @@ const productToValues = (product) => {
 const valuesToPayload = (values) => ({
   name: { en: values.nameEn.trim(), ar: values.nameAr.trim() },
   description: { en: values.descriptionEn.trim(), ar: values.descriptionAr.trim() },
+  descriptionBlocks: values.descriptionBlocks || [],
   category: values.category.trim(),
   subcategory: values.subcategory.trim(),
   gender: values.gender,
@@ -537,24 +541,36 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
               />
             </Stack>
 
-            {/* ── Descriptions ── */}
+            {/* ── Short Description ── */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <TextField
                 fullWidth multiline minRows={2}
-                label="Description (English)"
+                label="Short Description (English)"
                 name="descriptionEn"
                 value={formik.values.descriptionEn}
                 onChange={formik.handleChange}
+                helperText="Shown at the top of the product page"
               />
               <TextField
                 fullWidth multiline minRows={2}
-                label="Description (Arabic)"
+                label="Short Description (Arabic)"
                 name="descriptionAr"
                 value={formik.values.descriptionAr}
                 onChange={formik.handleChange}
                 inputProps={{ dir: 'rtl' }}
               />
             </Stack>
+
+            <Divider sx={{ my: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Rich description (paragraphs, bullets, featured points, specs)
+              </Typography>
+            </Divider>
+
+            <DescriptionBlocksEditor
+              value={formik.values.descriptionBlocks}
+              onChange={(blocks) => formik.setFieldValue('descriptionBlocks', blocks)}
+            />
 
             {/* ── Category / Subcategory / Gender ── */}
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
