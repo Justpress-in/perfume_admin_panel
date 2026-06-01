@@ -111,7 +111,7 @@ const emptyValues = {
   nameAr: '',
   descriptionEn: '',
   descriptionAr: '',
-  descriptionBlocks: [],
+  descriptionHtml: { en: '', ar: '' },
   category: '',
   subcategory: '',
   gender: '',
@@ -153,7 +153,10 @@ const productToValues = (product) => {
     nameAr: product.name?.ar || '',
     descriptionEn: product.description?.en || '',
     descriptionAr: product.description?.ar || '',
-    descriptionBlocks: Array.isArray(product.descriptionBlocks) ? product.descriptionBlocks : [],
+    descriptionHtml: {
+      en: typeof product.descriptionHtml?.en === 'string' ? product.descriptionHtml.en : '',
+      ar: typeof product.descriptionHtml?.ar === 'string' ? product.descriptionHtml.ar : '',
+    },
     category: product.category || '',
     subcategory: product.subcategory || '',
     gender: product.gender || '',
@@ -180,7 +183,7 @@ const productToValues = (product) => {
 const valuesToPayload = (values) => ({
   name: { en: values.nameEn.trim(), ar: values.nameAr.trim() },
   description: { en: values.descriptionEn.trim(), ar: values.descriptionAr.trim() },
-  descriptionBlocks: values.descriptionBlocks || [],
+  descriptionHtml: values.descriptionHtml || { en: '', ar: '' },
   category: values.category.trim(),
   subcategory: values.subcategory.trim(),
   gender: values.gender,
@@ -563,13 +566,13 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
 
             <Divider sx={{ my: 1 }}>
               <Typography variant="caption" color="text.secondary">
-                Rich description (paragraphs, bullets, featured points, specs)
+                Rich description
               </Typography>
             </Divider>
 
             <DescriptionBlocksEditor
-              value={formik.values.descriptionBlocks}
-              onChange={(blocks) => formik.setFieldValue('descriptionBlocks', blocks)}
+              value={formik.values.descriptionHtml}
+              onChange={(html) => formik.setFieldValue('descriptionHtml', html)}
             />
 
             {/* ── Category / Subcategory / Gender ── */}
