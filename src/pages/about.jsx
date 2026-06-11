@@ -31,6 +31,10 @@ import {
   Typography
 } from '@mui/material';
 import { api } from 'src/lib/api';
+import { DescriptionBlocksEditor } from 'src/sections/products/description-blocks-editor';
+
+// Strip HTML tags for short text previews in the section list.
+const stripHtml = (html) => (html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 /* ─── Section Dialog ─────────────────────────────────────────── */
 const emptySec = { titleEn: '', titleAr: '', bodyEn: '', bodyAr: '', sortOrder: 0, isActive: true };
@@ -103,7 +107,7 @@ const SectionDialog = ({ open, section, aboutId, onClose, onSaved }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>{isEdit ? 'Edit section' : 'New section'}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
@@ -142,13 +146,10 @@ const SectionDialog = ({ open, section, aboutId, onClose, onSaved }) => {
               onChange={(e) => setForm(p => ({ ...p, titleAr: e.target.value }))}
               inputProps={{ dir: 'rtl' }} />
           </Stack>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField fullWidth multiline minRows={4} label="Body (English)" value={form.bodyEn}
-              onChange={(e) => setForm(p => ({ ...p, bodyEn: e.target.value }))} />
-            <TextField fullWidth multiline minRows={4} label="Body (Arabic)" value={form.bodyAr}
-              onChange={(e) => setForm(p => ({ ...p, bodyAr: e.target.value }))}
-              inputProps={{ dir: 'rtl' }} />
-          </Stack>
+          <DescriptionBlocksEditor
+            value={{ en: form.bodyEn, ar: form.bodyAr }}
+            onChange={({ en, ar }) => setForm(p => ({ ...p, bodyEn: en, bodyAr: ar }))}
+          />
           <Stack direction="row" spacing={2} alignItems="center">
             <TextField label="Sort order" type="number" value={form.sortOrder}
               onChange={(e) => setForm(p => ({ ...p, sortOrder: e.target.value }))}
@@ -358,7 +359,7 @@ const Page = () => {
                               <Typography variant="body2" color="text.secondary"
                                 sx={{ overflow: 'hidden', display: '-webkit-box',
                                   WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                                {sec.body.en}
+                                {stripHtml(sec.body.en)}
                               </Typography>
                             )}
                           </Box>
