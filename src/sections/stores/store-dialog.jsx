@@ -207,7 +207,7 @@ export const StoreDialog = ({ open, item, onClose, onSaved }) => {
                 )}
               </Stack>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                PNG or JPG. Uploaded after saving.
+                PNG or JPG. Recommended: 800×600 px (4:3). Uploaded after saving.
               </Typography>
               <input
                 ref={fileRef}

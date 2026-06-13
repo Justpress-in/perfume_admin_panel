@@ -123,6 +123,9 @@ const ImageUploader = ({ offerId, currentUrl, onUploaded }) => {
   return (
     <Stack spacing={1}>
       <Typography variant="subtitle2" color="text.secondary">Offer image</Typography>
+      <Typography variant="caption" color="text.secondary">
+        PNG or JPG. Recommended: 1000×750 px (4:3).
+      </Typography>
       {preview && (
         <Box
           component="img"

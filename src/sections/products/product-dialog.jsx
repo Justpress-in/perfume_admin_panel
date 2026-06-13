@@ -398,7 +398,7 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
               <Stack spacing={1}>
                 <Typography variant="subtitle2">Primary image</Typography>
                 <Typography color="text.secondary" variant="caption">
-                  PNG or JPG. Uploaded after the product is saved.
+                  PNG or JPG. Recommended: 1000×1000 px (square). Uploaded after the product is saved.
                 </Typography>
                 <Stack direction="row" spacing={1}>
                   <Button
@@ -513,7 +513,7 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
                 onChange={handleExtraFileChange}
               />
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                Up to 10 additional images per upload.
+                Up to 10 additional images per upload. Recommended: 1000×1000 px (square).
               </Typography>
             </Box>
 
@@ -540,26 +540,6 @@ export const ProductDialog = ({ open, product, onClose, onSaved }) => {
                 onBlur={formik.handleBlur}
                 error={Boolean(formik.touched.nameAr && formik.errors.nameAr)}
                 helperText={formik.touched.nameAr && formik.errors.nameAr}
-                inputProps={{ dir: 'rtl' }}
-              />
-            </Stack>
-
-            {/* ── Short Description ── */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <TextField
-                fullWidth multiline minRows={2}
-                label="Short Description (English)"
-                name="descriptionEn"
-                value={formik.values.descriptionEn}
-                onChange={formik.handleChange}
-                helperText="Shown at the top of the product page"
-              />
-              <TextField
-                fullWidth multiline minRows={2}
-                label="Short Description (Arabic)"
-                name="descriptionAr"
-                value={formik.values.descriptionAr}
-                onChange={formik.handleChange}
                 inputProps={{ dir: 'rtl' }}
               />
             </Stack>

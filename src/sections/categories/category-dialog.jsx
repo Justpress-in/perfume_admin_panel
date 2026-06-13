@@ -163,7 +163,7 @@ export const CategoryDialog = ({ open, item, parents = [], hideParent = false, o
                   )}
                 </Stack>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                  PNG or JPG. Uploaded after saving.
+                  PNG or JPG. Recommended: 600×600 px (square). Uploaded after saving.
                 </Typography>
                 <input
                   ref={fileRef}

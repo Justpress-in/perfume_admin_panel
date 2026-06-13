@@ -122,6 +122,9 @@ const SectionDialog = ({ open, section, aboutId, onClose, onSaved }) => {
             </Avatar>
             <Box>
               <Typography variant="subtitle2" gutterBottom>Section image</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                PNG or JPG. Recommended: 1200×900 px (4:3).
+              </Typography>
               <Stack direction="row" spacing={1}>
                 <Button size="small" variant="outlined" startIcon={<PhotoCameraIcon />}
                   onClick={() => fileRef.current?.click()}>

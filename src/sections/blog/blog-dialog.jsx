@@ -242,7 +242,7 @@ export const BlogDialog = ({ open, post, onClose, onSaved }) => {
                 )}
               </Stack>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                PNG or JPG. Uploaded after the post is saved.
+                PNG or JPG. Recommended: 1200×800 px (3:2). Uploaded after the post is saved.
               </Typography>
               <input
                 ref={fileRef}
