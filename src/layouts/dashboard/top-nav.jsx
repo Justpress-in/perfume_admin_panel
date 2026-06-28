@@ -12,8 +12,10 @@ import {
   Typography
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import { Logo } from 'src/components/logo';
 import { useAuth } from 'src/contexts/auth-context';
+import { ChangePasswordDialog } from 'src/sections/account/change-password-dialog';
 
 const TOP_NAV_HEIGHT = 64;
 
@@ -21,6 +23,7 @@ export const TopNav = () => {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
   const open = Boolean(anchorEl);
 
   const handleOpen = (event) => setAnchorEl(event.currentTarget);
@@ -28,6 +31,18 @@ export const TopNav = () => {
 
   const handleLogout = async () => {
     handleClose();
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  const handleOpenPassword = () => {
+    handleClose();
+    setPasswordOpen(true);
+  };
+
+  const handlePasswordSuccess = async () => {
+    setPasswordOpen(false);
+    // Changing the password invalidates the session on the server — re-authenticate.
     await logout();
     navigate('/login', { replace: true });
   };
@@ -130,6 +145,12 @@ export const TopNav = () => {
               </Box>
             )}
             <Divider />
+            <MenuItem onClick={handleOpenPassword}>
+              <ListItemIcon>
+                <LockResetIcon fontSize="small" />
+              </ListItemIcon>
+              Change password
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <ListItemIcon>
                 <LogoutIcon fontSize="small" />
@@ -139,6 +160,11 @@ export const TopNav = () => {
           </Menu>
         </Stack>
       </Stack>
+      <ChangePasswordDialog
+        open={passwordOpen}
+        onClose={() => setPasswordOpen(false)}
+        onSuccess={handlePasswordSuccess}
+      />
     </Box>
   );
 };
