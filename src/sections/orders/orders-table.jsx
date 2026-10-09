@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
 import { OrderDetailDrawer } from './order-detail-drawer';
+import { PaymentChip } from './payment-chip';
 
 const OrderRowMenu = ({ orderId, onStatusChange, onViewDetails, statuses }) => {
   const [anchor, setAnchor] = useState(null);
@@ -75,6 +76,7 @@ export const OrdersTable = (props) => {
               <TableCell>Customer</TableCell>
               <TableCell>Channel</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Payment</TableCell>
               <TableCell>Total (RM)</TableCell>
               <TableCell />
             </TableRow>
@@ -82,7 +84,7 @@ export const OrdersTable = (props) => {
           <TableBody>
             {items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 6, color: 'text.secondary' }}>
                   No orders found
                 </TableCell>
               </TableRow>
@@ -127,6 +129,9 @@ export const OrdersTable = (props) => {
                           {statusInfo.label}
                         </Typography>
                       </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <PaymentChip payment={order.payment} />
                     </TableCell>
                     <TableCell>{totalAmount}</TableCell>
                     <TableCell align="right">

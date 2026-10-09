@@ -24,6 +24,7 @@ import XMarkIcon from '@heroicons/react/24/solid/XMarkIcon';
 import PrinterIcon from '@heroicons/react/24/outline/PrinterIcon';
 import { SvgIcon } from '@mui/material';
 import { api } from 'src/lib/api';
+import { PaymentChip } from './payment-chip';
 
 const Field = ({ label, value }) => (
   <Box>
@@ -224,6 +225,37 @@ export const OrderDetailDrawer = ({ orderId, open, onClose, statuses = [], onSta
               </Stack>
             </Box>
 
+            {order.payment?.method === 'paypal' && (
+              <>
+                <Divider />
+                <Box>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                    <Typography variant="subtitle2">Payment</Typography>
+                    <PaymentChip payment={order.payment} />
+                  </Stack>
+                  {order.payment.status === 'pending' && (
+                    <Alert severity="warning" sx={{ mb: 1.5 }}>
+                      Payment not received yet. Do not ship this order until it is marked Paid.
+                    </Alert>
+                  )}
+                  {order.payment.status === 'failed' && (
+                    <Alert severity="error" sx={{ mb: 1.5 }}>
+                      Payment failed or the captured amount did not match. Check PayPal before shipping.
+                    </Alert>
+                  )}
+                  <Stack spacing={1.5}>
+                    <Stack direction="row" spacing={3}>
+                      <Field label="Method" value="PayPal" />
+                      <Field label="Charged" value={order.payment.amount && `${order.payment.amount} ${order.payment.currency}`} />
+                      <Field label="Paid At" value={order.payment.paidAt && format(new Date(order.payment.paidAt), 'dd MMM yyyy, HH:mm')} />
+                    </Stack>
+                    <Field label="PayPal Transaction ID" value={order.payment.provider?.captureId} />
+                    <Field label="PayPal Payer" value={order.payment.provider?.payerEmail} />
+                  </Stack>
+                </Box>
+              </>
+            )}
+
             <Divider />
 
             {/* Items */}
@@ -418,6 +450,9 @@ export const OrderDetailDrawer = ({ orderId, open, onClose, statuses = [], onSta
             <div className="row"><span className="label">Discount {order.couponCode ? `(${order.couponCode})` : ''}</span><span>− RM {Number(order.discount).toFixed(2)}</span></div>
           )}
           <div className="row"><span className="label">Shipping</span><span>Free</span></div>
+          {order.payment?.method === 'paypal' && (
+            <div className="row"><span className="label">Payment</span><span>PayPal · {order.payment.status}</span></div>
+          )}
           <hr className="divider-solid" />
           <div className="total-row"><span>TOTAL</span><span>RM {Number(order.total).toFixed(2)}</span></div>
 

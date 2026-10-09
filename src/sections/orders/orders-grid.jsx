@@ -18,6 +18,7 @@ import {
   Typography
 } from '@mui/material';
 import { OrderDetailDrawer } from './order-detail-drawer';
+import { PaymentChip } from './payment-chip';
 
 const OrderCard = ({ order, onStatusChange, onViewDetails, statuses }) => {
   const [anchor, setAnchor] = useState(null);
@@ -35,6 +36,7 @@ const OrderCard = ({ order, onStatusChange, onViewDetails, statuses }) => {
       <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
         <Typography variant="subtitle2" fontWeight={700}>#{orderNum}</Typography>
         <Stack direction="row" alignItems="center" spacing={0.5}>
+          <PaymentChip payment={order.payment} />
           <Chip
             label={statusLabel}
             size="small"
